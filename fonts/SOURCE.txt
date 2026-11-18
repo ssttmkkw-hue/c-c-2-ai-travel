@@ -1,0 +1,5 @@
+Fusion Pixel Font 12px proportional（简体中文 + 日文）
+上游：https://github.com/TakWolf/fusion-pixel-font
+版本：2026.11.10
+许可证：SIL Open Font License 1.1，见同目录 OFL.txt。
+衍生来源的许可证在 LICENSES/（ark-pixel、cubic-11、galmuri）。
