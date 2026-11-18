@@ -1,6 +1,6 @@
 # T05 · 护照选卡界面
 
-- **状态**：todo
+- **状态**：review
 - **类型**：🖥 UI
 - **依赖**：—
 - **预估规模**：M
@@ -37,17 +37,17 @@
 
 ## 验收清单
 
-- [ ] `npm run build` 通过
-- [ ] 打开/关闭/选卡/键盘操作都正常，不和 WASD 等游戏按键冲突
-- [ ] 新注册一张地图卡后，护照自动出现这张卡（不需要改 UI 代码）
+- [x] `npm run build` 通过
+- [x] 打开/关闭/选卡/键盘操作都正常，不和 WASD 等游戏按键冲突
+- [x] 新注册一张地图卡后，护照自动出现这张卡（不需要改 UI 代码）
 
 ---
 
 ## 完成记录（Cursor 填写）
 
-- 做了什么：
-- 新增/修改文件：
-- 截图或说明：
-- 遗留问题 / 需要 Claude 修改的地方：
+- 做了什么：护照界面按 `MAP_CARDS` 渲染明信片（调色板 sky / primary / accent 纯 CSS 渐变），显示 name、nameLocal、country、tagline，当前地图盖「当前位置」章。Tab / M 开关并发 `ui:modal`；点击或 Enter 发 `map:request` 后合上。打开时在 window 捕获阶段拦住方向键、Enter、Esc、Tab、M，数字键仍留给 debugHud。首次挂载自动打开。窄屏单列。
+- 新增/修改文件：`src/ui/passport/index.ts`、`src/ui/passport/passport.css`、`src/ui/base.css`（Fusion Pixel `@font-face` 与通用变量）、`src/main.ts`（挂载一行）、`public/fonts/**`、本卡与 `tasks/README.md` 状态。
+- 截图或说明：`npm run build` 零错误。Code Bot 已用 headless Chromium 实测：首次进入自动打开、打开时 W 不移动玩家、方向键选卡、Enter 出发并合上、Tab/M 开、Esc/M 合、点击卡片切图、印章随 map:loaded 更新、T01 新注册的 gallery 卡自动出现、390px 宽单列，控制台零报错、字体加载成功（截图 /workspace/c-c-2-shots/t05-*.png，在 Code Bot 的机器上）；键盘拦截靠捕获阶段 `preventDefault` + `stopPropagation`，玩家移动仍由 `ui:modal` 冻结。字体为 Fusion Pixel 12px proportional（简中 + 日文，2026.11.10），SIL OFL 1.1，许可证在 `public/fonts/OFL.txt`，上游说明在 `public/fonts/SOURCE.txt`。未使用 Zpix（该字体个人免费但禁止再分发）。
+- 遗留问题 / 需要 Claude 修改的地方：无。阿拉伯文地名会落到系统字体（Fusion Pixel 不含阿文）。
 
 ## 审阅意见（Claude 填写）

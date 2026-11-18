@@ -1,9 +1,29 @@
 /* 全局基础样式。UI 组件样式放在 src/ui/<组件>/ 下各自的 css 中（见任务卡 T05/T06） */
+@font-face {
+  font-family: 'Fusion Pixel';
+  src: url('/fonts/fusion-pixel-12px-proportional-zh_hans.otf.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Fusion Pixel';
+  src: url('/fonts/fusion-pixel-12px-proportional-ja.otf.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+3040-30FF, U+31F0-31FF, U+FF66-FF9D;
+}
 :root {
   --ui-bg: rgba(30, 20, 40, 0.78);
   --ui-fg: #fff8f0;
   --ui-accent: #ff4f8b;
-  --ui-font: 'Zpix', 'Press Start 2P', 'PingFang SC', 'Microsoft YaHei', monospace;
+  --ui-ink: #2b1838;
+  --ui-paper: #f3e2c0;
+  --ui-paper-dark: #e4c896;
+  --ui-line: #2b1838;
+  --ui-border: 4px solid var(--ui-line);
+  --ui-font: 'Fusion Pixel', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #111; }
 #app { position: fixed; inset: 0; }

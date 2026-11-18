@@ -7,11 +7,13 @@ import { World } from '@/world/World';
 import { Player } from '@/player/Player';
 import { MAP_CARDS } from '@/world/registry';
 import { mountDebugHud } from '@/ui/debugHud';
+import { mountPassport } from '@/ui/passport';
 
 const engine = new Engine(document.getElementById('app')!);
 const world = new World(engine);
 const player = new Player(engine, world);
 mountDebugHud(document.getElementById('ui')!);
+mountPassport(document.getElementById('ui')!);
 
 // 开发调试用：在浏览器控制台里可以访问 __game
 (window as any).__game = { engine, world, player, bus };
