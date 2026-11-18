@@ -4,13 +4,14 @@
 src/
 ├── main.ts              入口：组装 Engine / World / Player / UI
 ├── core/                🔒 引擎层
-│   ├── Engine.ts        渲染器、主循环、像素化（低分辨率画布 + CSS pixelated 放大）
+│   ├── Engine.ts        渲染器、主循环、渲染管线（离屏渲染 → 整数倍放大到物理像素）
 │   ├── Input.ts         键鼠输入、pointer lock
 │   ├── events.ts        全局事件总线 bus（类型安全）
 │   ├── ui.ts            弹窗栈 modals + 按键路由 keys.bind（UI 快捷键唯一入口）
-│   └── settings.ts      玩家设置（像素大小、描边、灵敏度），持久化
+│   └── settings.ts      玩家设置（画面风格、像素颗粒、画质、描边、灵敏度），持久化
 ├── render/              🔒 风格层
-│   ├── toon.ts          卡通材质（3 阶硬阴影）、反向外壳描边
+│   ├── toon.ts          卡通材质（3 阶硬阴影）、反向外壳描边（屏幕空间恒定粗细）、阴影补丁
+│   ├── quality.ts       画质档位表、渲染分辨率计算 computeView()
 │   └── palette.ts       调色板类型
 ├── art/
 │   ├── kit.ts           🔒 基础件：box / cylinder / cone / ball / prism / group / place
@@ -49,6 +50,7 @@ Player ──每帧──▶ 移动/碰撞 → CameraRig → 检测附近 NPC �
 | `map:loading {from,to}` | World | 开始加载（过场动画） |
 | `map:loaded {card}` | World | 加载完成 |
 | `settings:changed` | settings | 设置变化 |
+| `render:view` | Engine | 渲染分辨率变化（内部分辨率、放大倍数），UI 显示用 |
 | `camera:mode {mode}` | CameraRig | 视角切换 |
 | `npc:nearby {npcId}` | Player | 附近可交互 NPC 变化 |
 | `npc:interact {npcId}` | Player | 按 E 交互 |
@@ -61,8 +63,11 @@ Player ──每帧──▶ 移动/碰撞 → CameraRig → 检测附近 NPC �
 
 ## 关键约束
 
-- **像素化**：画布分辨率 = 窗口 / pixelSize。所有 UI 都是 HTML 叠在 `#ui` 上，不受像素化影响。
-  如果想让 UI 也有像素感，用像素字体 + 无抗锯齿的 CSS（`image-rendering: pixelated`）。
+- **像素化**：画布后备缓冲 = 物理像素（CSS 尺寸 × devicePixelRatio）。场景先渲染到离屏缓冲（`engine.view.width × height`），
+  像素风下再用最近邻**整数倍**放大到画布；高清模式 1:1 + MSAA。分辨率怎么算都在 `src/render/quality.ts`。
+  要内部分辨率读 `engine.view`，不要读 `renderer.domElement.width`（那是物理像素）。
+- **UI**：所有 UI 都是 HTML 叠在 `#ui` 上，不受像素化影响。`#ui` 有整体 CSS zoom（`src/ui/scale.ts`），
+  保证 12px 点阵字体落在整数物理像素上：**字号只用 12px / 24px**；在 `#ui` 里用 JS 设像素坐标时要除以 `uiZoom()`。
 - **碰撞**：只有 XZ 平面的轴对齐盒（AABB）。地面固定 y=0。旋转过的物体会用其包围盒，
   所以斜放的大物体请手动 `ctx.addCollider()` 更贴合的盒子。
 - **材质**：`toonMaterial()` 全局按颜色缓存，卸载地图时不释放材质，只释放几何体。
