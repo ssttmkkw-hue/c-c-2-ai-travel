@@ -12,6 +12,7 @@ import { mountDebugHud } from '@/ui/debugHud';
 import { mountDialogue } from '@/ui/dialogue';
 import { mountHud } from '@/ui/hud';
 import { mountPassport } from '@/ui/passport';
+import { mountUiScale } from '@/ui/scale';
 import { mountSettings } from '@/ui/settings';
 import { mountTransition } from '@/ui/transition';
 import { mountWardrobe } from '@/ui/wardrobe';
@@ -20,6 +21,7 @@ const engine = new Engine(document.getElementById('app')!);
 const world = new World(engine);
 const player = new Player(engine, world);
 const ui = document.getElementById('ui')!;
+mountUiScale(ui); // 先定好 UI 缩放，后面挂载的界面量尺寸时才准
 mountSettings(ui);
 mountHud(ui);
 const dialogue = mountDialogue(ui);

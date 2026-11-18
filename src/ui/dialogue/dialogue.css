@@ -42,9 +42,10 @@
 
 .dialogue-text {
   margin: 0;
-  min-height: 3.2em;
-  font-size: 14px;
-  line-height: 1.7;
+  min-height: 40px;
+  /* 12px 点阵字体只能用 12 的整数倍字号，14px 会糊；行高取整数像素 */
+  font-size: 12px;
+  line-height: 20px;
   white-space: pre-wrap;
 }
 

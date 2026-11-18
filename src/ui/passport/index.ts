@@ -11,8 +11,6 @@ import './passport.css';
 /** 护照只显示正式地图卡（devOnly 的道具馆等只能用数字键进入） */
 const CARDS = MAP_CARDS.filter((c) => !c.devOnly);
 
-const COLS_BREAK = 720;
-
 export function mountPassport(root: HTMLElement): void {
   const overlay = document.createElement('div');
   overlay.className = 'passport';
@@ -54,7 +52,9 @@ export function mountPassport(root: HTMLElement): void {
   });
 
   function cols(): number {
-    return window.innerWidth <= COLS_BREAK ? 1 : 2;
+    // 按实际排版数列数：窄屏时样式表会变成单列，而 #ui 有整体缩放（ui/scale.ts），不能拿 window.innerWidth 判断
+    const top = buttons[0]?.offsetTop;
+    return Math.max(1, buttons.filter((b) => b.offsetTop === top).length);
   }
 
   function paintSelection(): void {

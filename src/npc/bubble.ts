@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import type { Engine } from '@/core/Engine';
 import { bus } from '@/core/events';
+import { uiZoom } from '@/ui/scale';
 import type { World } from '@/world/World';
 
 const HEAD = 1.55;
@@ -35,7 +36,7 @@ export function mountNpcBubble(root: HTMLElement, engine: Engine, world: World):
       z-index: 2;
       margin: 0;
       padding: 2px 4px;
-      font-size: 14px;
+      font-size: 12px;
       line-height: 1;
       background: var(--ui-paper);
       border: var(--ui-border);
@@ -61,8 +62,10 @@ export function mountNpcBubble(root: HTMLElement, engine: Engine, world: World):
       el.hidden = true;
       return;
     }
-    const x = (proj.x * 0.5 + 0.5) * window.innerWidth;
-    const y = (-proj.y * 0.5 + 0.5) * window.innerHeight;
+    // #ui 整体有 CSS zoom（见 ui/scale.ts），里面的 px 要除以缩放倍数；取整避免气泡落在半个像素上发糊
+    const z = uiZoom();
+    const x = Math.round(((proj.x * 0.5 + 0.5) * window.innerWidth) / z);
+    const y = Math.round(((-proj.y * 0.5 + 0.5) * window.innerHeight) / z);
     el.hidden = false;
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
