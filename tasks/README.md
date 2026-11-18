@@ -16,7 +16,7 @@
 | [T07](T07-travel-transition.md) | 地图切换过场动画 | 🖥 UI | T05 | todo |
 | [T08](T08-map-giza.md) | 吉萨地图卡完整版 | 🎨 美术 | T01 | todo |
 | [T09](T09-map-paris.md) | 巴黎地图卡（新） | 🎨 美术 | T01 | todo |
-| [T10](T10-npc-dialogue.md) | NPC 对话框 | 🖥 UI | — | todo |
+| [T10](T10-npc-dialogue.md) | NPC 对话框 | 🖥 UI | — | review |
 | [T11](T11-ambient-fx.md) | 环境特效（花瓣/沙尘/云） | ✨ 特效 | — | todo |
 
 建议顺序：T01 + T03 + T05 可并行 → T02 → T04 / T06 / T10 → T07 / T08 / T09 / T11

@@ -1,0 +1,85 @@
+/* 屏幕下方对话框。Fusion Pixel + 硬边框，和护照 / 设置同一套变量。 */
+.dialogue {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 18px 16px 22px;
+  background: transparent;
+  image-rendering: pixelated;
+}
+
+.dialogue[hidden] {
+  display: none;
+}
+
+.dialogue-box {
+  position: relative;
+  width: min(760px, 100%);
+  min-height: 108px;
+  box-sizing: border-box;
+  padding: 22px 16px 12px;
+  background: var(--ui-paper);
+  color: var(--ui-ink);
+  border: var(--ui-border);
+}
+
+.dialogue-name {
+  position: absolute;
+  left: 12px;
+  top: 0;
+  transform: translateY(-58%);
+  margin: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  background: var(--ui-paper);
+  border: var(--ui-border);
+}
+
+.dialogue-text {
+  margin: 0;
+  min-height: 3.2em;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.dialogue-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.dialogue-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dialogue-options:empty {
+  display: none;
+}
+
+.dialogue-option {
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ui-ink);
+  background: var(--ui-paper-dark);
+  border: 3px solid var(--ui-line);
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.dialogue-option.is-selected,
+.dialogue-option:focus-visible {
+  background: var(--ui-accent);
+  color: var(--ui-paper);
+  outline: none;
+}
