@@ -27,7 +27,7 @@ export type Updater = (dt: number, time: number) => void;
 export class Engine {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
-  readonly camera = new THREE.PerspectiveCamera(55, 1, 0.1, 400);
+  readonly camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.1, 400);
   readonly input: Input;
   private updaters = new Set<Updater>();
   private clock = new THREE.Clock();
@@ -211,7 +211,10 @@ export class Engine {
       r.setViewport(0, 0, view.canvasWidth, view.canvasHeight);
     }
 
-    this.camera.aspect = view.width / view.height;
+    const aspect = view.width / view.height;
+    this.camera.aspect = aspect;
+    // 竖屏水平视角会缩成望远镜。只在高大于宽时抬高垂直 fov；横屏（含 1280×800 / 1920×1080）保持 55°。
+    this.camera.fov = fovForAspect(aspect);
     this.camera.updateProjectionMatrix();
     setOutlineWidth(view.outlinePx, view.height, this.camera.fov);
 
@@ -304,4 +307,17 @@ export class Engine {
       ro.observe(this.container); // Safari 等不支持 device-pixel-content-box：退回 clientWidth × dpr 取整
     }
   }
+}
+
+const BASE_FOV = 55;
+/** 竖屏时期望至少这么宽的水平视角（度）。再低就只看得到角色面前一条窄缝 */
+const PORTRAIT_MIN_HFOV = 50;
+const PORTRAIT_MAX_VFOV = 82;
+
+/** 横屏保持 55°。竖屏抬高垂直 fov，让水平视角不要缩成望远镜。 */
+function fovForAspect(aspect: number): number {
+  if (!(aspect > 0) || aspect >= 1) return BASE_FOV;
+  const minH = (PORTRAIT_MIN_HFOV * Math.PI) / 180;
+  const vertical = (2 * Math.atan(Math.tan(minH / 2) / aspect) * 180) / Math.PI;
+  return Math.min(PORTRAIT_MAX_VFOV, Math.max(BASE_FOV, vertical));
 }

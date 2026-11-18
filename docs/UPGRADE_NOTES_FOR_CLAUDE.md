@@ -459,3 +459,23 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 
 - `npm run typecheck` 通过。`npm run shots` 三张图 0.00%（这项改动和竖屏 fov 分开提交；fov 那次提交前也跑过 0%）。
 - `node tools/context-restore.mjs`：`setVirtualMove` 之后派发 `visibilitychange`，`KeyW` 松开。`WEBGL_lose_context` 丢失再恢复，控制台无 error，截图抽样亮点约 6.4 万（不是黑屏）。
+
+---
+
+## R1-4 · 竖屏相机和安全区
+
+### `src/core/Engine.ts`、`src/player/CameraRig.ts`
+
+- **改了什么**：`resize` 里按内部分辨率的宽高比设垂直 fov。宽大于等于高时仍是 55°。竖屏把水平 fov 抬到大约 50°，垂直 fov 封顶 82°（iPhone 14 竖屏内部分辨率约 0.59，实际约 77°）。第三人称用 `portraitDistance`：竖屏距离乘上 `1 + (1 - aspect) * 0.28`，上限 16 米；不改 `cam.distance` 本身，滚轮仍调原来的值。横屏乘数是 1。
+- **为什么**：fov 固定 55° 时，竖屏水平只有大约 30°，像望远镜。
+- **影响**：1280×800 和 1920×1080 的 fov 和距离不变，所以现有基线不动。第一人称不拉远。
+
+### UI
+
+- `viewport-fit=cover` 在触屏那次提交里已经加上。
+- HUD 地点 / 提示 / 交谈、设置齿轮、自动降档提示、护照、衣柜、设置、对话框的边距改成 `env(safe-area-inset-*)`。桌面 inset 是 0，位置和原来一样。触屏层在上一提交里已经用了 inset。
+
+### 验证
+
+- `npm run typecheck` 通过。`npm run shots` 三张图 0.00%。
+- iPhone 14 竖屏（390 CSS 宽，`hasTouch`）：fov 约 76.9°，地点标签在视口内（top/left 14）。截图 `/workspace/c-c-2-shots/fable-r2-phone-tokyo.png`、`fable-r2-phone-egypt.png`。角色、前方路面和地标都在画面里，不是一条窄缝。这两张不进 `tools/baseline`。

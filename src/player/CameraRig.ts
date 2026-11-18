@@ -52,14 +52,25 @@ export class CameraRig {
     } else {
       this.pitch = THREE.MathUtils.clamp(this.pitch, -1.2, 0.35);
       const pivot = new THREE.Vector3(target.x, target.y + PIVOT_HEIGHT, target.z);
+      const dist = portraitDistance(this.distance, camera.aspect);
       const cp = Math.cos(this.pitch);
       camera.position.set(
-        pivot.x + Math.sin(this.yaw) * cp * this.distance,
-        pivot.y - Math.sin(this.pitch) * this.distance,
-        pivot.z + Math.cos(this.yaw) * cp * this.distance,
+        pivot.x + Math.sin(this.yaw) * cp * dist,
+        pivot.y - Math.sin(this.pitch) * dist,
+        pivot.z + Math.cos(this.yaw) * cp * dist,
       );
       camera.position.y = Math.max(camera.position.y, 0.3);
       camera.lookAt(pivot);
     }
   }
+}
+
+/**
+ * 竖屏时相机稍拉远，避免抬高 fov 之后角色贴得太满。
+ * 横屏（aspect >= 1）原样返回，滚轮调的 distance 也不改写。
+ */
+function portraitDistance(distance: number, aspect: number): number {
+  if (!(aspect > 0) || aspect >= 1) return distance;
+  const boost = 1 + (1 - aspect) * 0.28;
+  return Math.min(distance * boost, 16);
 }

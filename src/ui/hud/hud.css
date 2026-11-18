@@ -4,8 +4,8 @@
 
 .hud-place {
   position: absolute;
-  left: 14px;
-  top: 14px;
+  left: calc(14px + env(safe-area-inset-left, 0px));
+  top: calc(14px + env(safe-area-inset-top, 0px));
   margin: 0;
   padding: 8px 12px;
   font-size: 12px;
@@ -28,8 +28,8 @@
 
 .hud-hints {
   position: absolute;
-  right: 14px;
-  bottom: 14px;
+  right: calc(14px + env(safe-area-inset-right, 0px));
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   margin: 0;
   max-width: min(420px, calc(100% - 28px));
   padding: 8px 10px;
@@ -58,7 +58,7 @@
 .hud-talk {
   position: absolute;
   left: 50%;
-  bottom: 18%;
+  bottom: calc(18% + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   margin: 0;
   padding: 8px 12px;
