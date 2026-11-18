@@ -29,6 +29,7 @@ export class Player {
 
   constructor(private engine: Engine, private world: World) {
     this.cam = new CameraRig(engine);
+    this.cam.obstacles = () => this.world.colliders;
     this.avatar = createAvatar();
     engine.scene.add(this.avatar.root);
     bus.on('map:loaded', ({ card }) => this.teleport(card.spawn.x, card.spawn.z, card.spawn.yaw));

@@ -587,3 +587,20 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 - 关上开局护照后 `npc:interact` 打开东京导游对话，Escape 关掉，按住 W 约 0.4 秒位移 1.72 米。
 - 东京→吉萨→巴黎 再回东京：场景里不重复的几何体 uuid 都是 154，`programs.length` 回到 9（改前第一轮之后停在 10）。`info.memory.geometries` 只计已经画过的几何体，站着不动时会在 133–137 之间跳，没有一轮比一轮更高。
 - 1280×800 出生点、`?autoquality=0`：东京 119 / 21417，吉萨 79 / 17529，巴黎 117 / 18869。和 A1 相同。
+
+---
+
+## R2-A2 · 第三人称镜头不钻墙
+
+### 保留区改动
+
+- `src/player/CameraRig.ts`：公开 `obstacles`。第三人称先把注视高度用 `rawDt` 缓动（冻结帧直接取目标），再沿朝向对高于 2.2 米且水平短边 ≥ 1 米的盒子做射线，把实际距离收到命中点前 0.35 米（最近 1.2 米）。拉近当帧生效，退回用 λ=5。`distance` 仍是滚轮要的距离。竖屏倍率乘在这个距离上再裁剪。弹窗时输入用 `dt=0`，缓动用进入函数时的 `rawDt`。去掉每帧 `new Vector3`。
+- `src/player/Player.ts`：构造时 `this.cam.obstacles = () => this.world.colliders`。
+
+### 验证
+
+- `npm run typecheck` 通过。`npm run shots` 九张 0.00%，`CONSOLE_ERRORS 0`。基线机位后方没有被这条射线切到。
+- 空地 `teleport(0, 22, 0)`：相机到注视点 6.00，`cam.distance === 6`。
+- 霓虹街 `teleport(20, 6.6, 0)`，yaw 八个方向各 30 帧：相机不在任何够高够宽的碰撞盒里，`cam.distance` 保持 6。顺着街看时机位会被拉到大约 4.5 米。改前改后：`/workspace/c-c-2-shots/r2-A2-before-neon.png`、`r2-A2-after-neon.png`。
+- 竖屏 400×800、aspect 0.5：`distance` 仍是 6，实际距离 6.84（×1.14）。
+- 1280×800 出生点、`?autoquality=0`：东京 121 / 21441，吉萨 79 / 17529，巴黎 117 / 18869。没有为金字塔空气角改碰撞。
