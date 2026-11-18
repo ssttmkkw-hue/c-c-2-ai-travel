@@ -33,7 +33,11 @@ export function createPyramid(p: Palette, spec: PyramidSpec): THREE.Group {
     const w = base * ((layers - i) / layers);
     topW = w;
     const color = i % 2 === 0 ? p.primary[0] : p.primary[1];
-    parts.push(kit.box(w, stepH * 0.94, w, color, { y: i * stepH + stepH / 2 }));
+    // 每层比层高矮一点，层与层之间留一道缝。最底层不留缝、直接落地：
+    // 悬空几厘米的话，底下那圈细细的影子在像素风下会变成一排虚线
+    const h = i === 0 ? stepH * 0.97 : stepH * 0.94;
+    const y = i === 0 ? h / 2 : i * stepH + stepH / 2;
+    parts.push(kit.box(w, h, w, color, { y }));
   }
   const capH = stepH * 1.7;
   parts.push(kit.cone(topW * 0.62, capH, 4, p.accent[2], {

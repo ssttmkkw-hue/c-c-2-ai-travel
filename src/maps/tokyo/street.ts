@@ -100,8 +100,9 @@ export function buildNeonStreet(ctx: MapBuildContext, add: Add): StreetAnim {
   // 街道上空沿电线挂一串纸灯笼，挂钩对齐电线高度，摇晃复用 sway。
   const wireY = 5.05;
   const wireZ = 6.6;
+  // 电线比 1 个像素还细，不描边的话远看会断成虚线；描边在屏幕上恒为 1 像素宽，能把它撑成一条连续的线
   add(kit.box(22.4, 0.03, 0.03, COLORS.metalDark, {
-    x: 23.2, y: wireY, z: wireZ, outline: false, shadow: false,
+    x: 23.2, y: wireY, z: wireZ, shadow: false,
   }));
   [13.4, 16.6, 20.0, 23.4, 27.2, 30.6, 33.6].forEach((x, i) => {
     const lantern = paperLantern(p, i);
@@ -119,13 +120,13 @@ export function buildNeonStreet(ctx: MapBuildContext, add: Add): StreetAnim {
     const span = x1 - x0;
     const mid = (x0 + x1) / 2;
     add(kit.box(span, 0.04, 0.04, COLORS.metalDark, {
-      x: mid, y: 5.18, z: -2.55, outline: false, shadow: false,
+      x: mid, y: 5.18, z: -2.55, shadow: false,
     }));
     add(kit.box(span * 0.52, 0.03, 0.03, COLORS.metalDark, {
-      x: mid - span * 0.24, y: 4.72, z: -2.45, rz: -0.1, outline: false, shadow: false,
+      x: mid - span * 0.24, y: 4.72, z: -2.45, rz: -0.1, shadow: false,
     }));
     add(kit.box(span * 0.52, 0.03, 0.03, COLORS.metalDark, {
-      x: mid + span * 0.24, y: 4.72, z: -2.45, rz: 0.1, outline: false, shadow: false,
+      x: mid + span * 0.24, y: 4.72, z: -2.45, rz: 0.1, shadow: false,
     }));
   }
 
