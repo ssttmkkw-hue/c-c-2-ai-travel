@@ -1,0 +1,95 @@
+.touch-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.touch-layer[hidden],
+.touch-look[hidden],
+.touch-pad[hidden],
+.touch-actions[hidden] {
+  display: none;
+}
+
+.touch-look {
+  position: absolute;
+  left: 38%;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.touch-menu {
+  position: absolute;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  right: calc(14px + env(safe-area-inset-right, 0px));
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.touch-pad {
+  position: absolute;
+  left: calc(16px + env(safe-area-inset-left, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  width: 128px;
+  height: 128px;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.touch-stick {
+  position: absolute;
+  inset: 0;
+  border: var(--ui-border);
+  border-radius: 50%;
+  background: rgba(30, 20, 40, 0.45);
+}
+
+.touch-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  border: var(--ui-border);
+  border-radius: 50%;
+  background: var(--ui-paper);
+}
+
+.touch-actions {
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.touch-btn {
+  margin: 0;
+  min-width: 52px;
+  min-height: 44px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 1px;
+  color: var(--ui-ink);
+  background: var(--ui-paper);
+  border: var(--ui-border);
+  touch-action: none;
+}
+
+.touch-btn:active {
+  background: var(--ui-paper-dark);
+}
+
+.touch-btn[hidden] {
+  display: none;
+}

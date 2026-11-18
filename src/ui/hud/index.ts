@@ -12,7 +12,7 @@ export function mountHud(root: HTMLElement): void {
   wrap.className = 'hud';
   wrap.innerHTML = `
     <p class="hud-place" data-place hidden></p>
-    <p class="hud-hints" data-hints>点击画面锁定鼠标 · WASD 移动 · Shift 跑 · Space 跳 · V 切视角 · P 设置 · H 再显示本提示</p>
+    <p class="hud-hints" data-hints></p>
     <p class="hud-talk" data-talk hidden>按 E 交谈</p>
   `;
   root.appendChild(wrap);
@@ -20,6 +20,14 @@ export function mountHud(root: HTMLElement): void {
   const place = wrap.querySelector('[data-place]') as HTMLElement;
   const hints = wrap.querySelector('[data-hints]') as HTMLElement;
   const talk = wrap.querySelector('[data-talk]') as HTMLElement;
+  const coarse = isCoarsePointer();
+  hints.textContent = coarse
+    ? '左侧摇杆移动 · 右侧滑动转视角 · 右下角跳跃和交谈 · 右上角打开护照、衣柜、设置'
+    : '点击画面锁定鼠标 · WASD 移动 · Shift 跑 · Space 跳 · V 切视角 · P 设置 · H 再显示本提示';
+  if (coarse) {
+    hints.classList.add('is-coarse');
+    talk.textContent = '点「交谈」';
+  }
   let hintTimer = 0;
   let nearby: string | null = null;
 
@@ -52,4 +60,12 @@ export function mountHud(root: HTMLElement): void {
   syncTalk();
 
   keys.bind('game', 'KeyH', () => showHints());
+}
+
+function isCoarsePointer(): boolean {
+  try {
+    return window.matchMedia?.('(pointer: coarse)').matches ?? false;
+  } catch {
+    return false;
+  }
 }

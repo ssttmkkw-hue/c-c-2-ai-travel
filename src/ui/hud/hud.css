@@ -46,6 +46,15 @@
   opacity: 0;
 }
 
+.hud-hints.is-coarse {
+  left: calc(14px + env(safe-area-inset-left, 0px));
+  right: auto;
+  bottom: auto;
+  top: calc(52px + env(safe-area-inset-top, 0px));
+  max-width: min(280px, calc(100% - 28px));
+  text-align: left;
+}
+
 .hud-talk {
   position: absolute;
   left: 50%;

@@ -419,3 +419,24 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 
 - `npm run typecheck` 通过。`npm run shots`：东京 / 吉萨 / 巴黎 0.00%，`CONSOLE_ERRORS 0`。
 - `node tools/autoquality-hidden.mjs`：采样中暂停 rAF 4 秒并拨到 `document.hidden`，恢复后几百毫秒内存档仍是高画质、精细、`autoQualityDone=false`。低画质 + 标准颗粒、每帧空转约 45ms：降到复古，`qualityManual=false`，`scale=3`，内部分辨率 427×267，提示含「分辨率」。
+
+---
+
+## R1-2 · 触屏最小闭环
+
+### `src/core/Input.ts`（保留区，R1 评审授权）
+
+- **改了什么**：新增 `setVirtualMove(x, y)`、`setVirtualRun(on)`、`addLook(dx, dy)`、`pressVirtual(code)`、`releaseAll()`。摇杆过死区后并进 `isDown` 的 WASD / Shift，点按并进 `wasPressed`，视角增量并进原来的鼠标位移。`pointer: coarse` 时点击画布不请求 pointer lock。`blur` 时键盘和虚拟输入一起清掉。
+- **为什么**：手机上没有键盘和 pointer lock，玩家移动代码不必改。
+- **影响**：桌面键盘 / 鼠标路径不变（虚拟集合默认是空的）。`isDown` / `wasPressed` 现在也会看到虚拟按键。
+
+### `src/ui/touch/`、`src/ui/hud/`、`src/main.ts`、`index.html`、`src/ui/base.css`
+
+- **改了什么**：coarse 指针才挂一层：左摇杆、右侧滑动转视角、跳 / 跑 / 交谈、右上角护照（KeyM）/ 衣柜（KeyB）/ 设置（KeyP）。交谈在 `npc:nearby` 有人时发 `npc:interact`。弹窗打开时收起摇杆和视角区。HUD 提示改成触屏说明。`html/body` 加 `touch-action: none` 和 `overscroll-behavior: none`。viewport 加上 `viewport-fit=cover`。开发模式 `__game.modals` 指向现有的弹窗栈，方便冒烟读 `isOpen`。
+- **为什么**：护照和衣柜以前只有键盘快捷键。
+- **影响**：精细指针不创建这层。开局护照仍然默认打开，触屏用同一个护照键合上。
+
+### 验证
+
+- `npm run typecheck` 通过。`npm run shots` 三张图 0.00%。
+- `node tools/touch-smoke.mjs`（Chromium + iPhone 14 横屏视口、`hasTouch`）：`pointer: coarse` 为真；摇杆推动约 2.99 米；向右拖视角 yaw 从 0 到 -0.27；没有 pointer lock；护照按钮能打开 `modals.isOpen('passport')`。

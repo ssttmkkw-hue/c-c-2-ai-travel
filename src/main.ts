@@ -1,7 +1,7 @@
 /**
  * 入口：组装各系统。新增系统（UI、音效、存档...）在这里挂载，系统之间用 bus 通信。
  */
-import '@/core/ui'; // 按键路由必须最先注册（见 core/ui.ts）
+import { modals } from '@/core/ui'; // 按键路由必须最先注册（见 core/ui.ts）
 import { Engine } from '@/core/Engine';
 import { bus } from '@/core/events';
 import { World } from '@/world/World';
@@ -11,6 +11,7 @@ import { mountNpcBubble } from '@/npc/bubble';
 import { mountDebugHud } from '@/ui/debugHud';
 import { mountDialogue } from '@/ui/dialogue';
 import { mountHud } from '@/ui/hud';
+import { mountTouch } from '@/ui/touch';
 import { mountPassport } from '@/ui/passport';
 import { mountAutoQuality } from '@/ui/autoQuality';
 import { shadowPatchApplied } from '@/render/toon';
@@ -29,6 +30,7 @@ mountUiScale(ui); // 先定好 UI 缩放，后面挂载的界面量尺寸时才�
 mountAutoQuality(ui);
 mountSettings(ui);
 mountHud(ui);
+mountTouch(ui, engine.input);
 const dialogue = mountDialogue(ui);
 mountPassport(ui);
 mountTransition(ui);
@@ -50,7 +52,7 @@ if (import.meta.env.DEV) {
       frameMs: { ...engine.frameMs },
     };
   };
-  (window as any).__game = { engine, world, player, bus, dialogue, shadowPatchApplied, qualityReport };
+  (window as any).__game = { engine, world, player, bus, dialogue, modals, shadowPatchApplied, qualityReport };
   console.info(`[画质] 阴影补丁${shadowPatchApplied ? '已生效' : '未生效'}`, qualityReport());
 }
 
