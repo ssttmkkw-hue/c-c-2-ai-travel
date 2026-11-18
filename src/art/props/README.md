@@ -21,7 +21,7 @@ export function sakuraTree(p: Palette, variant = 0): THREE.Group
 |---|---|---|---|
 | `roundCrownTree(p, variant?)` | trees.ts | 高 3.2~4.6 | 圆冠，部件 2~3 |
 | `pineTree(p, variant?)` | trees.ts | 高 4.2~5.4 | 三层锥冠，部件 4 |
-| `sakuraTree(p, variant?)` | trees.ts | 高 3.4~4.2 | 花色取 accent，部件 3 |
+| `sakuraTree(p, variant?)` | trees.ts | 高 3.4~4.2 | 花色取 COLORS.sakura，部件 3 |
 | `palmTree(p, variant?)` | trees.ts | 高 4~5.5 | 五片叶，部件 6 |
 | `bush(p, variant?)` | trees.ts | 高 0.7~1.1 | 灌木，部件 2~3 |
 | `streetLamp(p, variant?)` | street.ts | 高 3.2~4.2 | 路灯，部件 4 |

@@ -1,7 +1,7 @@
 /**
- * 通用建筑。原点底部中心，门朝 -Z。
+ * 通用建筑。原点底部中心，门朝 +Z。
  * 房子 / 店铺 / 塔部件数均 ≤ 40（实际约 6~14）。
- * 人字顶用两块斜板拼出，没有三棱柱基础件。
+ * 人字顶用 kit.prism，底面贴墙顶，每边出檐约 0.3m。
  */
 import type * as THREE from 'three';
 import type { Palette } from '@/render/palette';
@@ -22,7 +22,7 @@ function vi(variant = 0): number {
 
 /**
  * 通用房子。默认 6×5m、2 层、人字顶。层高 2.4m（Q 版偏矮）。
- * 部件：墙 + 门 + 每层 2 扇窗 + 屋顶 1~2 + 可选烟囱。最多约 11。
+ * 部件：墙 + 门 + 每层 2 扇窗 + 屋顶 1 + 可选烟囱。最多约 11。
  */
 export function house(p: Palette, opts: HouseOpts = {}, variant = 0): THREE.Group {
   const i = vi(variant);
@@ -51,11 +51,8 @@ export function house(p: Palette, opts: HouseOpts = {}, variant = 0): THREE.Grou
   } else if (roof === 'hip') {
     parts.push(kit.cone(Math.max(w, d) * 0.72, 1.6, 4, roofColor, { y: h + 0.8, ry: Math.PI / 4 }));
   } else {
-    const slope = 0.55;
-    parts.push(
-      kit.box(w + 0.3, 0.16, d * 0.72, roofColor, { y: h + 0.55, z: -d * 0.16, rx: slope }),
-      kit.box(w + 0.3, 0.16, d * 0.72, roofColor, { y: h + 0.55, z: d * 0.16, rx: -slope }),
-    );
+    const roofH = 1.2;
+    parts.push(kit.prism(w + 0.6, roofH, d + 0.6, roofColor, { y: h + roofH / 2 }));
   }
   if (i === 2) parts.push(kit.box(0.4, 0.7, 0.4, COLORS.stoneDark, { x: w * 0.28, y: h + 0.5 }));
   return kit.group(...parts);

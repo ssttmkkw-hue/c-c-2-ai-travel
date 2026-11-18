@@ -38,15 +38,16 @@ export function pineTree(p: Palette, variant = 0): THREE.Group {
   );
 }
 
-/** 樱花树。花色用 accent。高约 3.4~4.2m。部件 3。 */
+/** 樱花树。花色用 COLORS.sakura。高约 3.4~4.2m。部件 3。 */
 export function sakuraTree(p: Palette, variant = 0): THREE.Group {
+  void p;
   const i = v(variant);
   const h = 1.4 + i * 0.2;
-  const blossom = pick(p.accent, i);
+  const blossom = pick([...COLORS.sakura], i);
   return kit.group(
     kit.cylinder(0.1, 0.18, h, COLORS.bark, { y: h / 2, segments: 6 }),
     kit.ball(1.15 + i * 0.08, blossom, { y: h + 0.85 }),
-    kit.ball(0.85, pick(p.accent, i + 1), { x: 0.55, y: h + 0.45, z: 0.15 }),
+    kit.ball(0.85, pick([...COLORS.sakura], i + 1), { x: 0.55, y: h + 0.45, z: 0.15 }),
   );
 }
 

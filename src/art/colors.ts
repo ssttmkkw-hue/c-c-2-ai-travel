@@ -15,6 +15,7 @@ export const COLORS = {
   metal: '#6e7480',
   metalDark: '#4a5058',
   glass: '#bfe3f2',
+  sakura: ['#ffc4d8', '#ff9fbf'],
   black: '#2a2430',
   white: '#f8f4ec',
 } as const;

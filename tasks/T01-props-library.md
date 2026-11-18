@@ -1,6 +1,6 @@
 # T01 · 通用道具库
 
-- **状态**：todo（小修）
+- **状态**：done
 - **类型**：🎨 美术
 - **依赖**：—
 - **预估规模**：L
@@ -62,6 +62,8 @@
   - house ≤13（墙+门+每层 2 窗+屋顶 1~2+variant 2 烟囱）、shopfront 6、tower 6~11（楼身+顶+天线+每层 1 条窗带，层数 3~8）
 - 截图或说明：按数字键 **3** 进入道具馆（注册顺序 tokyo、egypt、gallery）。人字顶用两块斜板拼，没有改 kit。
 - 遗留问题 / 需要 Claude 修改的地方：若要更干净的人字顶，可在 kit 加三棱柱（底面三角、沿宽度挤出）。当前斜板在屋脊处会交叉重叠。目视验收已由 Code Bot 用 headless Chromium（swiftshader）在像素大小 4 下截图确认：gallery 按 3 可进入、道具全部可见、比例与玩家协调、控制台零报错。另注：gallery 调色板 accent 是红/黄，所以这里的樱花树不是粉色（樱花色取 p.accent，东京调色板下才是粉色），请 Claude 判断是否需要专门的花色。
+- 第 1 轮审阅修改：`house` 人字顶改为 `kit.prism`（宽深各出檐 0.6m，即每边约 0.3m，底面在墙顶 `y = h`），去掉两块斜板；`COLORS.sakura` 增加 `#ffc4d8` / `#ff9fbf`，`sakuraTree` 改用该固有色；`buildings.ts` 顶部注释改为门朝 +Z。`npm run build` 零错误。
+  - Code Bot headless 验证：人字顶为单个 prism、无重叠；gallery 中樱花为粉色；控制台零报错；截图 t01fix-*.png。
 
 ## 审阅意见（Claude 填写）
 
