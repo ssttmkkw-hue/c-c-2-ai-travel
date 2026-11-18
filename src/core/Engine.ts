@@ -31,7 +31,12 @@ export class Engine {
   readonly input: Input;
   private updaters = new Set<Updater>();
   private clock = new THREE.Clock();
-  private time = 0;
+  private simTime = 0;
+  /**
+   * 非 null 时主循环不再推进时间（dt = 0，time 固定）。
+   * 只给视觉回归用：粒子、水面、云、程序动画都停在同一时刻，画面仍每帧重画。
+   */
+  private visualFreeze: number | null = null;
   private started = false;
 
   private currentView: RenderView | null = null;
@@ -133,6 +138,21 @@ export class Engine {
     return () => this.updaters.delete(fn);
   }
 
+  /** 当前模拟时间（秒）。画面冻结时等于冻结点，不再增加 */
+  get time(): number {
+    return this.visualFreeze ?? this.simTime;
+  }
+
+  /**
+   * 冻结或恢复模拟时间。传入秒数则停在该时刻；传入 null 恢复。
+   * 开发模式下挂在 `__game.engine` 上，视觉回归脚本用来固定云、水和粒子。
+   */
+  freezeVisual(time: number | null): void {
+    this.visualFreeze = time;
+    if (time != null) this.simTime = time;
+    this.clock.getDelta();
+  }
+
   /** 重新计算分辨率。窗口尺寸 / 缩放 / 设置变化时自动调用，一般不需要手动调 */
   resize(): void {
     const dpr = window.devicePixelRatio || 1;
@@ -202,9 +222,16 @@ export class Engine {
     // UI 模块在 Engine 之后挂载，错过了构造时的那次广播，这里补发一次
     bus.emit('render:view', this.view);
     this.renderer.setAnimationLoop(() => {
-      const dt = Math.min(this.clock.getDelta(), 1 / 20); // 防止切后台回来时 dt 爆炸
-      this.time += dt;
-      this.updaters.forEach((fn) => fn(dt, this.time));
+      let dt: number;
+      if (this.visualFreeze != null) {
+        this.clock.getDelta();
+        dt = 0;
+        this.simTime = this.visualFreeze;
+      } else {
+        dt = Math.min(this.clock.getDelta(), 1 / 20); // 防止切后台回来时 dt 爆炸
+        this.simTime += dt;
+      }
+      this.updaters.forEach((fn) => fn(dt, this.simTime));
       this.renderFrame();
       this.input.endFrame();
     });
