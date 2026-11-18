@@ -9,8 +9,9 @@ import { pick } from '@/render/palette';
 import * as kit from '@/art/kit';
 import { COLORS } from '@/art/colors';
 import {
-  sakuraTree, bush, rock, flowerPatch, stoneLantern, fenceSegment, tower, house,
+  sakuraTree, bush, rock, flowerPatch, stoneLantern, fenceSegment, tower, house, addGroundDetail,
 } from '@/art/props';
+import { addFallingParticles } from '@/fx/particles';
 import { palette } from './palette';
 import {
   createTorii, createShrine, createKomainu, createRedWhiteTower,
@@ -82,6 +83,16 @@ const card: MapCardDef = {
 
     budget.add(kit.box(200, 0.24, 200, p.ground, { y: -0.12, outline: false, shadow: false }));
 
+    // 地面细节：铺装色块 + 草丛 + 石子（参道、本殿广场、霓虹街上不放）
+    addGroundDetail(ctx, {
+      half: 40,
+      avoid: [[-2.6, -36, 2.6, 26], [-7.2, -36, 7.2, -22], [2.2, 1.5, 36, 11.5]],
+      tiles: { count: 300, grid: 1.5, size: [1.5, 3], contrast: 0.045 },
+      tufts: { count: 70, colors: [p.foliage[2], p.foliage[2], p.foliage[0]] },
+      pebbles: { count: 90, colors: [COLORS.stone, COLORS.stoneLight] },
+    });
+    addFallingParticles(ctx, { shape: 'petal', count: 260, color: p.foliage[0] });
+
     buildApproach(ctx, budget.add);
     const anim = buildNeonStreet(ctx, budget.add);
     buildSkyline(budget.add, p);
@@ -129,6 +140,10 @@ function buildApproach(ctx: MapBuildContext, add: Add): void {
   add(kit.box(14, 0.05, 12, COLORS.stone, {
     y: 0.03, z: SHRINE_Z + 2.2, outline: false, shadow: false,
   }));
+  // 路缘石：参道两侧各一条，东侧在霓虹街路口断开
+  for (const [x, z0, z1] of [[-2.42, -22.8, 25.2], [2.42, -22.8, 4.3], [2.42, 8.9, 25.2]]) {
+    add(kit.box(0.16, 0.1, z1 - z0, COLORS.stone, { x, y: 0.05, z: (z0 + z1) / 2, shadow: false }));
+  }
 
   add(kit.place(createTorii(p), 0, TORII_Z));
   const pillar = 0.42;

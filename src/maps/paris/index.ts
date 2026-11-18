@@ -7,6 +7,9 @@ import * as THREE from 'three';
 import type { MapCardDef, MapBuildContext } from '@/world/MapCard';
 import { pick } from '@/render/palette';
 import * as kit from '@/art/kit';
+import { COLORS } from '@/art/colors';
+import { addGroundDetail } from '@/art/props';
+import { addFallingParticles } from '@/fx/particles';
 import { palette } from './palette';
 import { TOWER, createEiffel } from './landmark';
 import { buildStreet } from './street';
@@ -63,6 +66,20 @@ const card: MapCardDef = {
     const budget = track(ctx);
 
     budget.add(kit.box(200, 0.24, 200, p.ground, { y: -0.12, outline: false, shadow: false }));
+
+    // 地面细节：石板色块 + 墙根小草 + 石子（中央步道、塞纳河、塔下广场不放）
+    addGroundDetail(ctx, {
+      half: 40,
+      avoid: [[-2.7, -9, 2.7, 23], [-43, -22.5, 43, -9.8], [-8, -35, 8, -23]],
+      tiles: { count: 300, grid: 1.2, size: [1.2, 2.4], contrast: 0.03 },
+      tufts: { count: 40, colors: [p.foliage[0], p.foliage[2]] },
+      pebbles: { count: 60, colors: [COLORS.stone, COLORS.stoneLight] },
+    });
+    addFallingParticles(ctx, { shape: 'leaf', count: 90, color: p.accent[1], size: 0.11 });
+    // 路缘石
+    for (const x of [-2.52, 2.52]) {
+      budget.add(kit.box(0.16, 0.1, 30.7, COLORS.stone, { x, y: 0.05, z: 7, shadow: false }));
+    }
 
     buildStreet(ctx, budget.add);
     budget.add(kit.place(createEiffel(p), TOWER.x, TOWER.z));

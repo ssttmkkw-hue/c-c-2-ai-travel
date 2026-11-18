@@ -8,7 +8,8 @@ import type { MapCardDef, MapBuildContext } from '@/world/MapCard';
 import { pick } from '@/render/palette';
 import * as kit from '@/art/kit';
 import { COLORS } from '@/art/colors';
-import { house, rock } from '@/art/props';
+import { house, rock, addGroundDetail } from '@/art/props';
+import { addFallingParticles } from '@/fx/particles';
 import { palette } from './palette';
 import {
   createPyramid, createSphinx, createObelisk,
@@ -68,7 +69,17 @@ const card: MapCardDef = {
 
     budget.add(kit.box(220, 0.24, 220, p.ground, { y: -0.12, outline: false, shadow: false }));
 
-    buildCauseway(budget.add);
+    // 地面细节：沙纹 + 碎石 + 干草（堤道、广场、尼罗河一侧不放）
+    addGroundDetail(ctx, {
+      half: 42,
+      avoid: [[-2.6, -17, 2.6, 21], [-7.2, -17, 7.2, -7.5], [-41, -41, -18.2, 37]],
+      tiles: { count: 240, size: [2.2, 5], contrast: 0.03 },
+      tufts: { count: 35, colors: [p.foliage[2], p.primary[2]] },
+      pebbles: { count: 160, colors: [p.primary[2], p.primary[3], COLORS.stone] },
+    });
+    addFallingParticles(ctx, { shape: 'dust', count: 220, color: p.primary[0], area: [30, 5, 30] });
+
+    buildCauseway(budget.add, p);
     buildPyramids(budget.add, p);
     const anim = buildSouq(ctx, budget.add);
     buildDunes(budget.add, p);
@@ -105,7 +116,11 @@ function track(ctx: MapBuildContext): { add: Add; meshes: number } {
 }
 
 /** 石板从出生点铺到金字塔前的广场，中间留出能走的路。 */
-function buildCauseway(add: Add): void {
+function buildCauseway(add: Add, p: MapBuildContext['palette']): void {
+  // 路缘：堤道两侧的矮砂岩条
+  for (const x of [-2.42, 2.42]) {
+    add(kit.box(0.2, 0.14, 27.9, p.primary[2], { x, y: 0.07, z: 6.3, shadow: false }));
+  }
   for (let i = 0; i < 6; i++) {
     const z = 18 - i * 5;
     add(kit.box(4.6, 0.07, 4.5, i % 2 === 0 ? COLORS.stoneLight : COLORS.stone, {

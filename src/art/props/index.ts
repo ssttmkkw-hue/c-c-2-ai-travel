@@ -3,3 +3,5 @@ export { vintageLamp, streetLamp, bench, trashBin, vendingMachine, postbox, traf
 export { rock, grassTuft, flowerPatch } from './nature';
 export { house, shopfront, tower } from './buildings';
 export type { HouseOpts } from './buildings';
+export { addGroundDetail } from './ground';
+export type { GroundDetailOpts, Rect } from './ground';

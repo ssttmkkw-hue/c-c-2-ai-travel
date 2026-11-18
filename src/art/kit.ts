@@ -103,3 +103,46 @@ export function place<T extends THREE.Object3D>(obj: T, x: number, z: number, ry
 export function dynamic<T extends THREE.Object3D>(obj: T): T {
   return markDynamic(obj);
 }
+
+export interface InstanceItem {
+  x: number;
+  z: number;
+  y?: number;
+  rx?: number;
+  ry?: number;
+  rz?: number;
+  /** 整体缩放（默认 1），可以再用 sx / sy / sz 单独拉伸某个方向 */
+  s?: number;
+  sx?: number;
+  sy?: number;
+  sz?: number;
+  color: THREE.ColorRepresentation;
+}
+
+/**
+ * 大量重复的小物件（草、石子、地砖色块…）：同一个形状画很多份，只占 1 次 draw call。
+ * template 用 kit.box / cone / ball 等创建，只取它的形状和自身的位置 / 旋转（颜色由每个 item 决定）。不描边，默认不投影。
+ *
+ *   ctx.add(kit.instances(kit.cone(0.08, 0.3, 3, '#fff', { y: 0.15 }), items));
+ */
+export function instances(template: THREE.Mesh, items: InstanceItem[], o: { shadow?: boolean } = {}): THREE.InstancedMesh {
+  const mesh = new THREE.InstancedMesh(template.geometry, toonMaterial('#ffffff'), items.length);
+  template.updateMatrix();
+  const m = new THREE.Matrix4();
+  const pos = new THREE.Vector3();
+  const quat = new THREE.Quaternion();
+  const scale = new THREE.Vector3();
+  const euler = new THREE.Euler();
+  const color = new THREE.Color();
+  items.forEach((it, i) => {
+    const s = it.s ?? 1;
+    pos.set(it.x, it.y ?? 0, it.z);
+    quat.setFromEuler(euler.set(it.rx ?? 0, it.ry ?? 0, it.rz ?? 0));
+    scale.set(s * (it.sx ?? 1), s * (it.sy ?? 1), s * (it.sz ?? 1));
+    mesh.setMatrixAt(i, m.compose(pos, quat, scale).multiply(template.matrix));
+    mesh.setColorAt(i, color.set(it.color));
+  });
+  mesh.castShadow = o.shadow ?? false;
+  mesh.receiveShadow = true;
+  return mesh;
+}
