@@ -6,7 +6,9 @@ import type { NpcDef } from './types';
 
 export function spawnNpcs(ctx: MapBuildContext, defs: NpcDef[]): { id: string; object: THREE.Object3D }[] {
   return defs.map((def) => {
-    const rig = createAvatar(def.outfit);
+    // 站立版：四肢合进髋部。会走路的 NPC 不要传 idle。头仍是关节，B3 用来转头。
+    const rig = createAvatar(def.outfit, { idle: true });
+    rig.root.userData.avatar = rig;
     rig.root.position.set(def.x, 0, def.z);
     rig.root.rotation.y = def.yaw ?? 0;
     ctx.add(rig.root, { collide: true });

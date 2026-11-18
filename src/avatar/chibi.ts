@@ -28,11 +28,24 @@ function joint(x = 0, y = 0, z = 0): THREE.Group {
   return g;
 }
 
-export function createChibiAvatar(outfitId: string): AvatarRig {
+/** 不标动态。站立 NPC 的四肢旋转恒为 0，并进 hips 的合批里 */
+function fixed(x = 0, y = 0, z = 0): THREE.Group {
+  const g = new THREE.Group();
+  g.position.set(x, y, z);
+  return g;
+}
+
+/**
+ * opts.idle：站立版。躯干和四肢不标动态，只能给永远站着的 NPC。
+ * 会走路的 NPC（以及玩家）必须用完整版，否则摆腿写在已经合批的网格上，画面不动。
+ * 头和髋仍是关节：呼吸、眨眼、转头都靠它们。
+ */
+export function createChibiAvatar(outfitId: string, opts: { idle?: boolean } = {}): AvatarRig {
+  const limb = opts.idle ? fixed : joint;
   const root = new THREE.Group();
   const hips = joint(0, HIP_Y, 0);
 
-  const torso = joint();
+  const torso = limb();
   const torsoMesh = kit.box(0.4, 0.36, 0.26, '#ffffff', { y: 0.2 });
   torso.add(torsoMesh);
 
@@ -52,18 +65,18 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
   const hat = kit.box(0.56, 0.07, 0.48, '#ffffff', { y: 0.4 });
   head.add(headMesh, hairCap, bangs, sideL, sideR, hairBack, eyes, hat);
 
-  const armL = joint(-0.26, 0.32, 0);
+  const armL = limb(-0.26, 0.32, 0);
   const upperArmL = kit.box(0.12, 0.2, 0.12, SKIN, { y: -0.1 });
-  const elbowL = joint(0, -0.2, 0);
+  const elbowL = limb(0, -0.2, 0);
   const foreArmL = kit.box(0.11, 0.18, 0.11, SKIN, { y: -0.09 });
   const handL = kit.ball(0.06, SKIN, { y: -0.2, outline: false, shadow: false });
   elbowL.add(foreArmL, handL);
   const sleeveL = kit.box(0.15, 0.16, 0.15, '#ffffff', { y: -0.08 });
   armL.add(upperArmL, sleeveL, elbowL);
 
-  const armR = joint(0.26, 0.32, 0);
+  const armR = limb(0.26, 0.32, 0);
   const upperArmR = kit.box(0.12, 0.2, 0.12, SKIN, { y: -0.1 });
-  const elbowR = joint(0, -0.2, 0);
+  const elbowR = limb(0, -0.2, 0);
   const foreArmR = kit.box(0.11, 0.18, 0.11, SKIN, { y: -0.09 });
   const handR = kit.ball(0.06, SKIN, { y: -0.2, outline: false, shadow: false });
   elbowR.add(foreArmR, handR);
@@ -72,17 +85,17 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
 
   torso.add(head, armL, armR);
 
-  const legL = joint(-0.1, 0, 0);
+  const legL = limb(-0.1, 0, 0);
   const thighL = kit.box(0.15, 0.24, 0.16, '#ffffff', { y: -0.12 });
-  const kneeL = joint(0, -0.24, 0);
+  const kneeL = limb(0, -0.24, 0);
   const shinL = kit.box(0.13, 0.16, 0.14, '#ffffff', { y: -0.08 });
   const shoeL = kit.box(0.15, 0.08, 0.2, SHOE, { y: -0.2, z: -0.02 });
   kneeL.add(shinL, shoeL);
   legL.add(thighL, kneeL);
 
-  const legR = joint(0.1, 0, 0);
+  const legR = limb(0.1, 0, 0);
   const thighR = kit.box(0.15, 0.24, 0.16, '#ffffff', { y: -0.12 });
-  const kneeR = joint(0, -0.24, 0);
+  const kneeR = limb(0, -0.24, 0);
   const shinR = kit.box(0.13, 0.16, 0.14, '#ffffff', { y: -0.08 });
   const shoeR = kit.box(0.15, 0.08, 0.2, SHOE, { y: -0.2, z: -0.02 });
   kneeR.add(shinR, shoeR);

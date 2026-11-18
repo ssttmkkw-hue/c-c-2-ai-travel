@@ -604,3 +604,23 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 - 霓虹街 `teleport(20, 6.6, 0)`，yaw 八个方向各 30 帧：相机不在任何够高够宽的碰撞盒里，`cam.distance` 保持 6。顺着街看时机位会被拉到大约 4.5 米。改前改后：`/workspace/c-c-2-shots/r2-A2-before-neon.png`、`r2-A2-after-neon.png`。
 - 竖屏 400×800、aspect 0.5：`distance` 仍是 6，实际距离 6.84（×1.14）。
 - 1280×800 出生点、`?autoquality=0`：东京 121 / 21441，吉萨 79 / 17529，巴黎 117 / 18869。没有为金字塔空气角改碰撞。
+
+---
+
+## R2-B2 · 站立 NPC 四肢合批
+
+### 保留区改动
+
+- `src/npc/spawn.ts`：`createAvatar(def.outfit, { idle: true })`。根节点 `userData.avatar` 指回 rig，方便在控制台换装验收。会走路的 NPC 不要传 idle。
+
+### 做了什么
+
+- `createChibiAvatar(outfitId, { idle })` / `createAvatar` 透传。站立版里躯干、手臂、肘、腿、膝用普通 Group；髋、头、眼睛仍是动态关节。`animate` 照旧写旋转，但四肢已经并进髋部，写了也不动。玩家仍是完整版。
+- 请在 `UPGRADE_PLAN.md` P1-2 备注：站立 NPC 已用合批解决，蒙皮只剩玩家和将来会走动的 NPC 受益。这次没改那份文档。
+
+### 验证
+
+- `npm run typecheck` 通过。`npm run shots` 九张都是 0.00% 通过。吉萨三张各有 1 个像素超过通道阈值（640×400 上约 (609,165)，深棕对灰），占比远低于 1.5%，没有更新基线。
+- 1280×800 出生点、`?autoquality=0`，相对 B2 之前（121 / 79 / 117）：东京 70（−51），吉萨 45（−34），巴黎 83（−34）。三角形仍是 21441 / 17529 / 18869。
+- 东京第一个 NPC（学生装）`setOutfit('tokyo-kasa')` 再设回 `tokyo-student`，绘制 68 → 69 → 68。再设一次学生装仍是 68。
+- 解冻后髋部 `position.y` 从 0.490 变到 0.494，呼吸还在。

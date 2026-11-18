@@ -5,6 +5,7 @@
 import type { AvatarRig } from './types';
 import { createChibiAvatar } from './chibi';
 
-export function createAvatar(outfitId = 'default'): AvatarRig {
-  return createChibiAvatar(outfitId);
+/** idle 为 true 时是站立版，四肢不会动，不能拿来走路 */
+export function createAvatar(outfitId = 'default', opts?: { idle?: boolean }): AvatarRig {
+  return createChibiAvatar(outfitId, opts);
 }
