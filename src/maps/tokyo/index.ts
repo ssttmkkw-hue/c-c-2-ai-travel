@@ -1,7 +1,7 @@
 /**
  * 东京：黄昏的神社参道 + 东侧霓虹小街。
  * 出生点朝 -Z，一眼能看见鸟居和尽头的本殿。
- * 道具 / 建筑正面朝 +Z。mesh 预算见 MESH_BUDGET（留出玩家和 NPC）。
+ * 道具 / 建筑正面朝 +Z。MESH_BUDGET 只是参考线，超了只计数，不裁物体。
  */
 import * as THREE from 'three';
 import type { MapCardDef, MapBuildContext } from '@/world/MapCard';
@@ -18,7 +18,7 @@ import {
 } from './landmark';
 import { buildNeonStreet } from './street';
 
-/** 场景网格上限。描边外壳也算。NPC 与玩家另计，大约再加 160。 */
+/** 场景网格参考线。描边外壳也算。超了只在 dev 打印，不丢弃物体。 */
 const MESH_BUDGET = 1100;
 
 type Add = MapBuildContext['add'];
@@ -94,31 +94,23 @@ const card: MapCardDef = {
       }
     });
 
-    if (budget.dropped > 0) {
-      console.warn(`[东京] 网格超过 ${MESH_BUDGET}，已省略 ${budget.dropped} 个物体（当前 ${budget.meshes}）`);
+    if (import.meta.env.DEV && budget.meshes > MESH_BUDGET) {
+      console.info(`[东京] 网格计数 ${budget.meshes}，超过参考线 ${MESH_BUDGET}`);
     }
   },
 };
 
-function track(ctx: MapBuildContext): { add: Add; meshes: number; dropped: number } {
-  const state = { meshes: 0, dropped: 0 };
+function track(ctx: MapBuildContext): { add: Add; meshes: number } {
+  const state = { meshes: 0 };
   const add: Add = (obj, opts) => {
     let n = 0;
     obj.traverse((o) => {
       if ((o as THREE.Mesh).isMesh) n++;
     });
-    if (state.meshes + n > MESH_BUDGET) {
-      state.dropped += 1;
-      obj.traverse((o) => {
-        const mesh = o as THREE.Mesh;
-        if (mesh.isMesh) mesh.geometry.dispose();
-      });
-      return obj;
-    }
     state.meshes += n;
     return ctx.add(obj, opts);
   };
-  return { add, get meshes() { return state.meshes; }, get dropped() { return state.dropped; } };
+  return { add, get meshes() { return state.meshes; } };
 }
 
 /** 参道：石板、石灯笼、樱花，鸟居前后都有路。 */

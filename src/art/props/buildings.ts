@@ -70,7 +70,10 @@ export function shopfront(p: Palette, opts: { w?: number; signColor?: string } =
     kit.box(w * 0.7, 0.45, 0.08, sign, {
       y: 2.9, z: 2.08, emissive: sign, emissiveIntensity: 0.55, outline: false,
     }),
-    kit.box(w * 0.62, 1.3, 0.06, COLORS.glass, { y: 1.35, z: 2.06, outline: false, transparent: true, opacity: 0.8 }),
+    kit.box(w * 0.62, 1.3, 0.06, COLORS.glass, {
+      y: 1.35, z: 2.06, outline: false, transparent: true, opacity: 0.8,
+      emissive: p.accent[2], emissiveIntensity: 0.4 + i * 0.1,
+    }),
     kit.box(0.9, 1.9, 0.08, COLORS.woodDark, { x: w * 0.32, y: 0.95, z: 2.06, outline: false }),
     kit.box(w + 0.2, 0.15, 4.3, pick(p.primary, i + 1), { y: h + 0.08 }),
   );

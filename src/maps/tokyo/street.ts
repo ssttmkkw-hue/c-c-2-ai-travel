@@ -18,11 +18,16 @@ export interface StreetAnim {
   flickers: THREE.Object3D[];
 }
 
-/** 竖向发光招牌。发光片朝 +Z。 */
+/**
+ * 竖向招牌，垂直于店面挑向街道。发光片贴在底板两侧（面朝 ±X），
+ * 从街道两个方向都能看见，不会被底板包住。
+ */
 function verticalSign(h: number, color: string, dark: string): { root: THREE.Group; glow: THREE.Object3D } {
-  const glow = kit.box(0.06, h * 0.78, 0.46, color, {
-    y: 0.5 + h * 0.42, z: 0.1, emissive: color, emissiveIntensity: 0.9, outline: false,
+  const y = 0.5 + h * 0.42;
+  const panel = (x: number) => kit.box(0.04, h * 0.78, 0.46, color, {
+    x, y, z: 0.1, emissive: color, emissiveIntensity: 1.2, outline: false,
   });
+  const glow = kit.group(panel(-0.09), panel(0.09));
   const root = kit.group(
     kit.box(0.14, h, 0.58, dark, { y: 0.4 + h / 2 }),
     glow,
@@ -91,6 +96,19 @@ export function buildNeonStreet(ctx: MapBuildContext, add: Add): StreetAnim {
     add(kit.place(made.root, s.x, s.z, s.ry ?? 0), { collide: true });
     if (s.flicker) flickers.push(made.glow);
   }
+
+  // 街道上空沿电线挂一串纸灯笼，挂钩对齐电线高度，摇晃复用 sway。
+  const wireY = 5.05;
+  const wireZ = 6.6;
+  add(kit.box(22.4, 0.03, 0.03, COLORS.metalDark, {
+    x: 23.2, y: wireY, z: wireZ, outline: false, shadow: false,
+  }));
+  [13.4, 16.6, 20.0, 23.4, 27.2, 30.6, 33.6].forEach((x, i) => {
+    const lantern = paperLantern(p, i);
+    add(kit.place(lantern, x, wireZ, 0, wireY - 0.82));
+    const sway = lantern.getObjectByName('sway');
+    if (sway) sways.push(sway);
+  });
 
   const poleX = [11.6, 19.0, 27.0, 34.6];
   for (let i = 0; i < poleX.length; i++) {

@@ -1,6 +1,6 @@
 # T02 · 东京地图卡完整版
 
-- **状态**：todo（小修）
+- **状态**：done
 - **类型**：🎨 美术
 - **依赖**：T01
 - **预估规模**：L
@@ -50,7 +50,9 @@
 - 做了什么：把东京占位布局换成黄昏神社参道 + 东侧霓虹小街。参道石板从出生点通向鸟居和歇山顶本殿（台阶、千木、一对狛犬）；鸟居有上翘笠木、贯和额束，柱子单独做碰撞，门洞可以走。东街有面店暖帘、便利店售货机、居酒屋纸灯笼（摇晃）和会闪的竖招牌，电线杆之间拉了线。远处一排高楼剪影加红白铁塔。四周围墙和矮楼挡住地图边缘。导游小樱在出生点旁，另有面店老板和游客。场景用预算计数器限制 `ctx.add` 的网格数。
 - 新增/修改文件：`src/maps/tokyo/index.ts`、`landmark.ts`、`street.ts`；`src/art/props/street.ts`、`index.ts`、`README.md`（补石灯笼、电线杆、纸灯笼）；`tasks/T02-map-tokyo.md`、`tasks/README.md`
 - 截图或说明：Code Bot headless 截图（在 Code Bot 机器 /workspace/c-c-2-shots/）：出生点视角 t02-spawn.png、霓虹街视角 t02-neon-street.png / 第一人称 t02-neon-firstperson2.png、本殿 t02-shrine.png。实测 scene mesh 853、draw calls 659、控制台零报错、预算计数器未省略任何物体；从 4 个起点向 4 个方向各跑 6 秒，位置都停在 |x|≤34.2、|z|≤41.5 的围墙内。Headless 统计：场景网格 677（含描边），加上玩家和 3 个 NPC（每人约 44）合计约 853，低于 1500。参道中线从 z=22 到 z=-24 无碰撞遮挡；边界围墙在约 ±42.6m。`npm run build` 通过。
-- 遗留问题 / 需要 Claude 修改的地方：无。当地服装仍等 T04，NPC 暂用默认旅行者服装。第三人称贴边时相机可能转到围墙外侧，靠雾和 200m 地面收住。另请 Claude 看：① index.ts 里的 MESH_BUDGET=1100 计数器超预算时会静默丢弃物体（只 console.warn），是否保留这种做法；② 霓虹街整体偏暗，第一人称下竖招牌不够显眼；③ 新增的石灯笼/电线杆/纸灯笼还没加进 gallery（gallery 不在 T02 允许范围）。
+- 遗留问题 / 需要 Claude 修改的地方：无。当地服装仍等 T04，NPC 暂用默认旅行者服装。第三人称贴边时相机可能转到围墙外侧，靠雾和 200m 地面收住。
+- 第 1 轮审阅修改：竖招牌发光片改到看板两侧（x=±0.09，厚 0.04，emissiveIntensity 1.2），街道两侧都能看见。`track()` 只计数，超 MESH_BUDGET 时在 dev 模式 `console.info`，不再丢弃物体。店铺玻璃加暖色 emissive（accent[2]，强度 0.4 / 0.5 / 0.6）。街道上空沿电线挂了 7 盏 `paperLantern`，挂钩对齐电线，摇晃复用已有 `sway`。`stoneLantern`、`utilityPole`、`paperLantern` 加进 gallery 的 z=13 一行。状态改为 done。
+  - Code Bot headless 验证：竖招牌两侧发光可见；电线纸灯笼原本因 `kit.place(obj, x, z, ry, y)` 参数顺序写错而落在地面附近，已改为 `kit.place(lantern, x, wireZ, 0, wireY - 0.82)`，现悬挂在街道上空；gallery 新增三种道具可见；scene mesh 910；控制台零报错。截图 r2-t02-*.png。另注：shopfront 玻璃自发光改在通用道具 buildings.ts 里，所有地图的店铺窗都会发暖光。
 
 ## 审阅意见（Claude 填写）
 

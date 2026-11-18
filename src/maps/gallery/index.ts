@@ -8,6 +8,7 @@ import { palette } from './palette';
 import {
   roundCrownTree, pineTree, sakuraTree, palmTree, bush,
   streetLamp, bench, trashBin, vendingMachine, postbox, trafficCone, fenceSegment,
+  stoneLantern, utilityPole, paperLantern,
   rock, grassTuft, flowerPatch,
   house, shopfront, tower,
 } from '@/art/props';
@@ -45,6 +46,12 @@ const card: MapCardDef = {
       (v) => sakuraTree(p, v),
       (v) => palmTree(p, v),
       (v) => bush(p, v),
+    ]);
+
+    row(13, 4.2, [
+      (v) => stoneLantern(p, v),
+      (v) => utilityPole(p, v),
+      (v) => paperLantern(p, v),
     ]);
 
     row(8, 3.4, [
