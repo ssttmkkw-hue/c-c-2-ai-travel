@@ -400,3 +400,7 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 - **改了什么**：`probeDynamic` 包在 `import.meta.env.DEV` 里。正式构建直接合批，不再用 4 个假时间点试跑 updater。
 - **为什么**：那 4 次调用是隐式副作用（累加 dt 的动画会在加载时多走约 4/60 秒），而且三张图已经显式 `kit.dynamic`。
 - **影响**：正式构建里漏标的物体会被并进静态 mesh，动画不动，也没有警告。开发模式行为不变（控制台仍会 warn）。没有改 `MapCard` 契约，也没有加 `ctx.add(obj, { dynamic })`。`getCameraPosition()` 没做。
+
+### 文档
+
+`docs/UPGRADE_PLAN.md` 第 4 节打了勾（P0-5、P1-3、P1-5、P1-7、P1-9 的探测一半），2.9 补了本轮两次帧率。帧率两次差一倍，不能当成云或水面的稳定开销。
