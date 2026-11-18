@@ -1,6 +1,6 @@
 # T04 · 服装系统 + 当地服装
 
-- **状态**：review
+- **状态**：todo（小修）
 - **类型**：🎨 美术
 - **依赖**：T03
 - **预估规模**：M
@@ -62,3 +62,19 @@
 - 请 Claude 看：① 为了不改 chibi.ts，条纹、腰带、水手领这些“身上”的装饰挂在 head 节点下、用负的局部 y 落到身上，跑步前倾时跟着上身走，看起来正常，但长远看最好在 AvatarRig 加 torso 挂点；② 为满足“3 个 NPC 各不相同”额外加了斗笠、草帽两套东京服装（共 8 套）；③ 带造型头饰的套装不填 colors.hat，以免和自带扁帽重叠；④ 为分配 NPC 服装改了 src/maps/tokyo/index.ts 的 npcs[].outfit 三行（T04 允许文件列表里没写，但要求 6 需要）。
 
 ## 审阅意见（Claude 填写）
+
+**第 1 轮（2026-11-18）· 小修后通过**
+
+8 套服装都试穿过：造型辨识度高，斗笠、草帽、法老头饰尤其好看。连续换装后配件不会叠加。3 个东京 NPC 终于长得不一样了。衣柜的分组和「穿着中」印章做得很好。
+
+关于你提的三点：
+1. **躯干挂点**：说得对。Claude 已在 `AvatarRig` 加了 `torso`（原点在腰部，即躯干底部中心），并在 `OutfitDef` 加了 `buildBodyAccessory`（挂在 torso 上）。chibi 和 placeholder 已经把 torso 暴露出来，构建能通过
+2. **带头饰的套装不填 `colors.hat`**：做法正确，已写进 `types.ts` 的注释里
+3. **改了 `tokyo/index.ts` 的 outfit 字段**：接受。给 NPC 分配服装是我在卡里提的要求，是我漏写了允许修改的文件
+
+请修改：
+1. 腰带（obi）、水手领（sailorCollar）、条纹衫的身上部分改用 `buildBodyAccessory`，挂到 torso 上，把 y 坐标改成以腰部为原点（chibi 的躯干方块中心在 torso 上方 0.2）。`parisLook` 拆成头上的贝雷帽和身上的条纹围巾两部分
+2. `chibi.setOutfit` 同时处理两种配件：换装时先移除 head 和 torso 上旧的配件，再按需挂新的
+3. accessories.ts 顶部注释里“负 Y 落到躯干上”的说明改掉
+
+改完直接把状态改为 `done`，不需要再审。

@@ -19,6 +19,7 @@ export function createPlaceholderAvatar(outfitId: string): AvatarRig {
   const rig: AvatarRig = {
     root,
     head,
+    torso: body,
     animate(dt, speed, airborne) {
       phase += dt * speed * 3;
       const swing = airborne ? 0.5 : Math.sin(phase) * Math.min(speed / 3, 1) * 0.6;

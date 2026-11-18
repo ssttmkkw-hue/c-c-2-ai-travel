@@ -10,7 +10,7 @@
 | [T01](T01-props-library.md) | 通用道具库 | 🎨 美术 | — | done |
 | [T02](T02-map-tokyo.md) | 东京地图卡完整版 | 🎨 美术 | T01 | done |
 | [T03](T03-avatar-model.md) | Q 版角色模型 + 程序动画 | 🎨 美术 | — | done |
-| [T04](T04-outfits.md) | 服装系统 + 当地服装 | 🎨 美术 | T03 | review |
+| [T04](T04-outfits.md) | 服装系统 + 当地服装 | 🎨 美术 | T03 | todo（小修） |
 | [T05](T05-ui-passport.md) | 护照选卡界面 | 🖥 UI | — | done |
 | [T06](T06-ui-settings-hud.md) | 设置面板 + 正式 HUD | 🖥 UI | — | done |
 | [T07](T07-travel-transition.md) | 地图切换过场动画 | 🖥 UI | T05 | todo |
@@ -18,9 +18,9 @@
 | [T09](T09-map-paris.md) | 巴黎地图卡（新） | 🎨 美术 | T01 | todo |
 | [T10](T10-npc-dialogue.md) | NPC 对话框 | 🖥 UI | — | done |
 | [T11](T11-ambient-fx.md) | 环境特效（花瓣/沙尘/云） | ✨ 特效 | — | todo |
-| [T12](T12-ui-key-routing.md) | UI 迁移到按键路由 + 收尾 | 🖥 UI | T05, T06, T10 | review |
+| [T12](T12-ui-key-routing.md) | UI 迁移到按键路由 + 收尾 | 🖥 UI | T05, T06, T10 | done |
 
-建议顺序（当前）：T12 + T04 可并行 → T07 / T08 / T09 / T11
+建议顺序（当前）：T04 小修 → T07 / T08 / T09 / T11 可并行
 
 ## Claude 保留任务（Cursor 不做）
 

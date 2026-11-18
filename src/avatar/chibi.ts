@@ -100,6 +100,7 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
   const rig: AvatarRig = {
     root,
     head,
+    torso,
     animate(dt, speed, airborne) {
       const walk = THREE.MathUtils.clamp(speed / 4, 0, 1);
       const run = THREE.MathUtils.clamp((speed - 4) / 3.5, 0, 1);

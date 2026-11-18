@@ -7,8 +7,13 @@ import type * as THREE from 'three';
 export interface AvatarRig {
   /** 角色根节点，原点在脚底中心，面朝 -Z */
   root: THREE.Group;
-  /** 头部节点（第一人称相机挂点参考 & 帽子挂点） */
+  /** 头部节点（第一人称相机挂点参考 & 帽子挂点）。原点在脖子，+Y 朝上 */
   head: THREE.Object3D;
+  /**
+   * 躯干节点（腰带、领子、围巾、背包等身上配件的挂点）。原点在腰部（躯干底部中心），+Y 朝上。
+   * 头部以后可能单独转动（看向玩家），所以身上的配件不要挂在 head 上。
+   */
+  torso: THREE.Object3D;
   /**
    * 每帧调用。speed: 当前水平速度 (m/s)，0 = 站立；airborne: 是否在空中
    * 实现走路摆臂、跳跃姿势、待机呼吸等程序动画。
@@ -24,8 +29,13 @@ export interface OutfitDef {
   name: string;
   /** 来自哪张地图卡（用于收集册分组），'default' 为初始服装 */
   origin: string;
-  /** 颜色：上衣 / 下装 / 帽子或发饰（可选） */
+  /**
+   * 颜色：上衣 / 下装 / 角色自带扁帽的颜色。
+   * hat 不填 = 不戴自带扁帽（有造型头饰的套装就不填，避免两顶帽子叠在一起）
+   */
   colors: { top: string; bottom: string; hat?: string };
-  /** 可选的额外配件构建函数（斗笠、头巾、贝雷帽...），挂在 head 上 */
+  /** 头上配件（斗笠、头巾、贝雷帽...），挂在 head 上 */
   buildAccessory?: () => THREE.Object3D;
+  /** 身上配件（腰带、水手领、条纹、围巾...），挂在 torso 上 */
+  buildBodyAccessory?: () => THREE.Object3D;
 }
