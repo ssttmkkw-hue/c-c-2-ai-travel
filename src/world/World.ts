@@ -61,6 +61,9 @@ export class World {
   private readonly litFrom = createLit();
   private readonly litTo = createLit();
   private readonly litNow = createLit();
+  /** 低画质隔帧更新阴影时，记住上一帧的吸附焦点 */
+  private readonly shadowSnap = new THREE.Vector3(NaN, NaN, NaN);
+  private shadowTick = 0;
 
   constructor(private engine: Engine) {
     const s = this.sun;
@@ -297,6 +300,24 @@ export class World {
     this.shadowFocus.set(0, 0, 0).addScaledVector(this.shadowRight, lx).addScaledVector(this.shadowUp, ly).addScaledVector(this.shadowForward, lz);
     this.sun.target.position.copy(this.shadowFocus);
     this.sun.position.copy(this.shadowFocus).add(this.sunOffset);
+    this.stepShadowUpdate();
+  }
+
+  /**
+   * 低画质隔帧画阴影。焦点吸附跨格时这一帧强制更新。
+   * 中 / 高保持 three 的 autoUpdate。renderer.info.render 不含阴影遍，所以这里不改变那份 draw call。
+   */
+  private stepShadowUpdate(): void {
+    const shadowMap = this.engine.renderer.shadowMap;
+    if (getSettings().quality !== 'low') {
+      if (!shadowMap.autoUpdate) shadowMap.autoUpdate = true;
+      return;
+    }
+    shadowMap.autoUpdate = false;
+    const moved = !Number.isFinite(this.shadowSnap.x) || this.shadowFocus.distanceToSquared(this.shadowSnap) > 1e-8;
+    this.shadowTick++;
+    if (moved || this.shadowTick % 2 === 0) shadowMap.needsUpdate = true;
+    this.shadowSnap.copy(this.shadowFocus);
   }
 }
 

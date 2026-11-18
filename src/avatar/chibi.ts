@@ -43,11 +43,14 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
   const sideL = kit.box(0.12, 0.3, 0.42, HAIR, { x: -0.24, y: 0.15, z: 0.03 });
   const sideR = kit.box(0.12, 0.3, 0.42, HAIR, { x: 0.24, y: 0.15, z: 0.03 });
   const hairBack = kit.box(0.46, 0.3, 0.14, HAIR, { y: 0.15, z: 0.2 });
-  // 眼睛要眨（改 scale），不参与合批
-  const eyeL = kit.dynamic(kit.box(0.09, 0.1, 0.04, EYE, { x: -0.12, y: 0.18, z: -0.22, outline: false }));
-  const eyeR = kit.dynamic(kit.box(0.09, 0.1, 0.04, EYE, { x: 0.12, y: 0.18, z: -0.22, outline: false }));
+  // 两只眼 scale 一样，放进同一个动态关节。原点在眼睛中心高度，零件本地 y=0，
+  // 眨眼缩放不会把它们往头的原点拉。合批后这一个关节只占 1 次绘制。
+  const eyes = joint(0, 0.18, -0.22);
+  const eyeL = kit.box(0.09, 0.1, 0.04, EYE, { x: -0.12, outline: false });
+  const eyeR = kit.box(0.09, 0.1, 0.04, EYE, { x: 0.12, outline: false });
+  eyes.add(eyeL, eyeR);
   const hat = kit.box(0.56, 0.07, 0.48, '#ffffff', { y: 0.4 });
-  head.add(headMesh, hairCap, bangs, sideL, sideR, hairBack, eyeL, eyeR, hat);
+  head.add(headMesh, hairCap, bangs, sideL, sideR, hairBack, eyes, hat);
 
   const armL = joint(-0.26, 0.32, 0);
   const upperArmL = kit.box(0.12, 0.2, 0.12, SKIN, { y: -0.1 });
@@ -152,8 +155,7 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
       if (blinkLeft > 0) blinkLeft -= dt;
       const eyeT = blinkLeft > 0 ? 0.12 : 1;
       eyeOpen = damp(eyeOpen, eyeT, 28, dt);
-      eyeL.scale.y = eyeOpen;
-      eyeR.scale.y = eyeOpen;
+      eyes.scale.y = eyeOpen;
     },
     setOutfit(id) {
       batch?.restore();

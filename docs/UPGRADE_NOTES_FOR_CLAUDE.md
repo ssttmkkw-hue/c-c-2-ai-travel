@@ -502,3 +502,24 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 
 - `npm run typecheck` 通过。`npm run shots`：原来三张 0.00%。新视角缺基线时脚本会新建（没有 `--update`），第二次再跑这 6 张也是 0.00%，`CONSOLE_ERRORS 0`。基线：`tools/baseline/tokyo-noon.png`、`tokyo-dawn.png`、`paris-dusk.png`、`paris-noon.png`、`egypt-dusk.png`、`egypt-dawn.png`。
 - 开发模式可以直接 `__game.world.setTimeOfDay('noon', 1.2)`。
+
+---
+
+## R1-6 · 零风险 draw call 削减
+
+### `src/avatar/chibi.ts`
+
+- 左右眼放进同一个 `eyes` 关节，关节原点在眼睛中心 `(0, 0.18, -0.22)`，两只眼本地 y=0。眨眼只改这个关节的 `scale.y`，不会把眼睛往头的原点拉。关节标了 dynamic，里面的两只眼由嵌套合批合成 1 个 mesh。
+- 1280×800、默认高画质、`renderer.info.render.calls`（不含阴影遍）：东京 125→121，吉萨 82→79，巴黎 120→117。三角形没变（21441 / 17529 / 18869）。每个角色少 1 次主场景绘制。
+
+### `src/npc/spawn.ts`
+
+- 和玩家的水平距离超过当前雾 `far * 0.9` 时 `root.visible = false`，并且不调用 `animate`。雾远会随时段变，所以读场景上的 fog，读不到再用调色板的 `fogFar`。现有三张图的出生点附近没有人远到这条线，所以基线画面不变。
+
+### `src/world/World.ts`
+
+- 只在画质为低时把 `shadowMap.autoUpdate` 设为 false，隔帧 `needsUpdate = true`。阴影焦点相对上一帧变了就当帧强制更新。中 / 高保持原来的每帧更新。`shots` 用的是默认高画质。
+
+### 验证
+
+- `npm run typecheck` 通过。`npm run shots` 九张（含时段）全部 0.00%，`CONSOLE_ERRORS 0`。眼睛没有可记录的像素差。
