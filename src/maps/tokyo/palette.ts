@@ -3,11 +3,13 @@ import type { Palette } from '@/render/palette';
 /** 东京：黄昏，樱花粉 + 霓虹紫 */
 export const palette: Palette = {
   sky: '#f6b8c8',
-  fog: '#e9a8c4',
-  fogNear: 30,
-  fogFar: 100,
+  skyTop: '#a488e0',
+  fog: '#f6b2c2',
+  fogNear: 36,
+  fogFar: 115,
   sun: '#ffd2b0',
   sunIntensity: 2.0,
+  sunDirection: [0.62, 0.5, 0.42], // 黄昏：太阳低，影子长
   skyLight: '#ffd0e6',
   groundLight: '#4a3a6a',
   ambientIntensity: 1.3,

@@ -3,15 +3,23 @@
  * 规则详见 docs/ART_GUIDE.md
  */
 export interface Palette {
-  /** 天空 / 背景色 */
+  /** 天空主色（天顶没单独配 skyTop 时，天顶也用它） */
   sky: string;
-  /** 雾色（通常接近 sky，远景会融进去） */
+  /** 天顶色（可选）。天空渐变：地平线 fog → sky → 天顶 skyTop，一般比 sky 更深、更饱和 */
+  skyTop?: string;
+  /** 雾色 = 天空地平线的颜色，远景会融进去 */
   fog: string;
   fogNear: number;
   fogFar: number;
   /** 太阳光颜色与强度 */
   sun: string;
   sunIntensity: number;
+  /** 指向太阳的方向 [x, y, z]（可选，默认右后上方）。y 越小太阳越低、影子越长 */
+  sunDirection?: [number, number, number];
+  /** 曝光（可选，默认 1）。整体偏暗 / 偏亮时微调 */
+  exposure?: number;
+  /** 饱和度（可选，默认 1.15）。1 = 不调整 */
+  saturation?: number;
   /** 半球光：天空侧 / 地面侧 */
   skyLight: string;
   groundLight: string;

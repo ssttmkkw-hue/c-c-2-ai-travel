@@ -6,11 +6,13 @@ import type { Palette } from '@/render/palette';
  */
 export const palette: Palette = {
   sky: '#d4e2ee',
+  skyTop: '#96bfea',
   fog: '#e7eef4',
-  fogNear: 32,
-  fogFar: 98,
+  fogNear: 36,
+  fogFar: 110,
   sun: '#fff4dc',
   sunIntensity: 2.15,
+  sunDirection: [0.5, 0.6, 0.46], // 清晨：斜阳
   skyLight: '#e6f0f8',
   groundLight: '#c6b59a',
   ambientIntensity: 1.26,

@@ -3,11 +3,13 @@ import type { Palette } from '@/render/palette';
 /** 吉萨：正午，沙金 + 天蓝 */
 export const palette: Palette = {
   sky: '#7ec8f0',
+  skyTop: '#3a93e6',
   fog: '#f3e6c0',
-  fogNear: 48,
-  fogFar: 128,
+  fogNear: 56,
+  fogFar: 150,
   sun: '#fff4d2',
   sunIntensity: 2.7,
+  sunDirection: [0.34, 0.86, 0.3], // 正午：太阳高，影子短
   skyLight: '#c5e7ff',
   groundLight: '#c4a06a',
   ambientIntensity: 1.05,

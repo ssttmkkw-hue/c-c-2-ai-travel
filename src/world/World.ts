@@ -11,6 +11,7 @@ import { getSettings } from '@/core/settings';
 import { shadowConfig } from '@/render/quality';
 import { refreshToonMaterials, setOutlineColor, setShadowTuning } from '@/render/toon';
 import { batchStatic, probeDynamic } from '@/render/batch';
+import { Sky } from '@/render/sky';
 import { getCard } from './registry';
 import { createRng } from './rng';
 import { spawnNpcs } from '@/npc/spawn';
@@ -19,6 +20,11 @@ import { spawnNpcs } from '@/npc/spawn';
 const SHADOW_HALF = 60;
 const SHADOW_NEAR = 1;
 const SHADOW_FAR = 150;
+/** 太阳到场景中心的距离（米）。只影响阴影相机放在哪，要让整张图落在 near~far 之间 */
+const SUN_DISTANCE = 66;
+/** 默认太阳方向（调色板没配 sunDirection 时用） */
+const DEFAULT_SUN_DIR: [number, number, number] = [30, 50, 20];
+const DEFAULT_SATURATION = 1.15;
 /** 固定阴影偏移（米，朝光源方向）。只需盖住深度精度误差；倾斜面的误差由 toon.ts 的坡度偏移负责 */
 const SHADOW_BIAS_M = 0.015;
 
@@ -35,11 +41,12 @@ export class World {
   private disposers: (() => void)[] = [];
   private sun = new THREE.DirectionalLight(0xffffff, 2);
   private hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+  private sky = new Sky();
   private loading = false;
 
   constructor(private engine: Engine) {
     const s = this.sun;
-    s.position.set(30, 50, 20);
+    s.position.set(...DEFAULT_SUN_DIR).setLength(SUN_DISTANCE);
     s.castShadow = true;
     const c = s.shadow.camera;
     c.left = c.bottom = -SHADOW_HALF;
@@ -50,7 +57,9 @@ export class World {
     s.shadow.normalBias = 0; // 不用法线偏移：它会把背光面往阴影里推，正好和卡通色阶打架（见 toon.ts 的阴影补丁）
     this.applyShadowQuality();
     bus.on('settings:changed', () => this.applyShadowQuality());
-    engine.scene.add(s, s.target, this.hemi);
+    engine.scene.add(s, s.target, this.hemi, this.sky.mesh);
+    this.sky.setBanded(getSettings().renderMode === 'pixel');
+    bus.on('settings:changed', (st) => this.sky.setBanded(st.renderMode === 'pixel'));
     bus.on('map:request', ({ id }) => void this.load(id));
   }
 
@@ -158,8 +167,12 @@ export class World {
 
   private applyPalette(p: Palette): void {
     const scene = this.engine.scene;
-    scene.background = new THREE.Color(p.sky);
+    // 天空 = 穹顶渐变（地平线是雾色 → 天顶色）；background 只是穹顶没画到时的兜底
+    scene.background = new THREE.Color(p.fog);
     scene.fog = new THREE.Fog(p.fog, p.fogNear, p.fogFar);
+    this.sun.position.set(...(p.sunDirection ?? DEFAULT_SUN_DIR)).setLength(SUN_DISTANCE);
+    this.sky.set(p.skyTop ?? p.sky, p.sky, p.fog, p.sun, this.sun.position);
+    this.engine.setGrade(p.exposure ?? 1, p.saturation ?? DEFAULT_SATURATION);
     this.sun.color.set(p.sun);
     this.sun.intensity = p.sunIntensity;
     this.hemi.color.set(p.skyLight);

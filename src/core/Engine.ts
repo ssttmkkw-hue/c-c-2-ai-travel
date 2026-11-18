@@ -10,6 +10,7 @@
  * - 高清：内部分辨率 = 物理像素（或按画质档位封顶），第 2 步 1:1 拷贝或双线性放大。
  * 分辨率怎么算见 src/render/quality.ts 的 computeView()。
  *
+ * 第 2 步同时做调色：曝光 → 高光压缩（色调映射）→ 饱和度 → sRGB。
  * 以后要做调色板量化 / 抖动 / 泛光等后期效果，在第 2 步的着色器里加，或在两步之间插入 pass。
  */
 import * as THREE from 'three';
@@ -57,7 +58,7 @@ export class Engine {
     this.targetType = floatOk ? THREE.HalfFloatType : THREE.UnsignedByteType;
 
     this.blitMaterial = new THREE.ShaderMaterial({
-      uniforms: { tScene: { value: null } },
+      uniforms: { tScene: { value: null }, exposure: { value: 1 }, saturation: { value: 1 } },
       vertexShader: /* glsl */ `
         varying vec2 vUv;
         void main() {
@@ -66,10 +67,24 @@ export class Engine {
         }`,
       fragmentShader: /* glsl */ `
         uniform sampler2D tScene;
+        uniform float exposure;
+        uniform float saturation;
         varying vec2 vUv;
         void main() {
-          gl_FragColor = texture2D( tScene, vUv );
-          #include <tonemapping_fragment>
+          vec3 c = texture2D( tScene, vUv ).rgb * exposure;
+          // 色调映射：最亮通道 0.8 以下原样输出（调色板的颜色不变色相、不压灰），
+          // 0.8 以上柔和地压回 1 以内，并略微向白色靠（过曝的高光不再是一刀切的截断）。
+          // 即 Khronos PBR Neutral 去掉暗部偏移的版本——那个偏移会把暗面压得太重
+          float peak = max( c.r, max( c.g, c.b ) );
+          if ( peak > 0.8 ) {
+            float newPeak = 1.0 - 0.04 / ( peak - 0.6 );
+            c *= newPeak / peak;
+            c = mix( c, vec3( newPeak ), 1.0 - 1.0 / ( 0.15 * ( peak - newPeak ) + 1.0 ) );
+          }
+          // 饱和度（线性空间）
+          float luma = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) );
+          c = clamp( mix( vec3( luma ), c, saturation ), 0.0, 1.0 );
+          gl_FragColor = vec4( c, 1.0 );
           #include <colorspace_fragment>
         }`,
       depthTest: false,
@@ -92,6 +107,12 @@ export class Engine {
   /** 当前渲染视图：内部分辨率、放大倍数等（只读）。变化时会广播 'render:view' */
   get view(): Readonly<RenderView> {
     return this.currentView!;
+  }
+
+  /** 整体调色：曝光与饱和度（在第 2 步的着色器里做，连同高光压缩）。由 World 按地图卡的调色板设置 */
+  setGrade(exposure: number, saturation: number): void {
+    this.blitMaterial.uniforms.exposure.value = exposure;
+    this.blitMaterial.uniforms.saturation.value = saturation;
   }
 
   /** 注册每帧回调，返回取消函数 */
