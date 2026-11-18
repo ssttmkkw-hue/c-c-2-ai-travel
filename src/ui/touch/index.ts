@@ -59,6 +59,12 @@ export function mountTouch(root: HTMLElement, input: Input): void {
     syncTalk();
   });
   bus.on('ui:modal', () => hideWhileModal());
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) return;
+    knob.style.transform = '';
+    input.setVirtualMove(0, 0);
+    input.setVirtualRun(false);
+  });
 
   bindStick(stick, knob, input);
   bindLook(look, input);

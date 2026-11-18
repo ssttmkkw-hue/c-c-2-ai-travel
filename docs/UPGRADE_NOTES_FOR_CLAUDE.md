@@ -440,3 +440,22 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 
 - `npm run typecheck` 通过。`npm run shots` 三张图 0.00%。
 - `node tools/touch-smoke.mjs`（Chromium + iPhone 14 横屏视口、`hasTouch`）：`pointer: coarse` 为真；摇杆推动约 2.99 米；向右拖视角 yaw 从 0 到 -0.27；没有 pointer lock；护照按钮能打开 `modals.isOpen('passport')`。
+
+---
+
+## R1-3 · 后台恢复和上下文丢失
+
+### `src/core/Engine.ts`
+
+- **改了什么**：监听 `webglcontextlost`（`preventDefault`，暂停主循环）和 `webglcontextrestored`（丢掉旧的离屏目标和灯光阴影图，不 `dispose`；重建 RenderTarget、`resize`，`refreshToonMaterials()`）。`visibilitychange` 时 `input.releaseAll()`，并 `clock.getDelta()` 丢掉积压间隔。three 自己也会 preventDefault 并重建 GL 状态，这里补的是它不管的离屏缓冲和卡通材质。
+- **为什么**：手机切后台经常丢 WebGL 上下文，不处理就是黑屏。回来时 Clock 的间隔会顶到 dt 上限，角色会跳一步。
+- **影响**：正常路径不进这两个分支。阴影图在恢复后由 three 按灯光上的 `mapSize` 重建。旧 GPU 资源不调用 `dispose`，避免在新上下文里删掉刚分配的 id。
+
+### `src/ui/touch/index.ts`
+
+- 页面隐藏时把摇杆旋钮归位，并清掉虚拟移动和跑步。Engine 也会 `releaseAll`，这里只是让按钮画面和输入一致。
+
+### 验证
+
+- `npm run typecheck` 通过。`npm run shots` 三张图 0.00%（这项改动和竖屏 fov 分开提交；fov 那次提交前也跑过 0%）。
+- `node tools/context-restore.mjs`：`setVirtualMove` 之后派发 `visibilitychange`，`KeyW` 松开。`WEBGL_lose_context` 丢失再恢复，控制台无 error，截图抽样亮点约 6.4 万（不是黑屏）。

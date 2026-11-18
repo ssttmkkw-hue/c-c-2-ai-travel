@@ -20,7 +20,7 @@ import { Input } from './Input';
 import { bus } from './events';
 import { getSettings } from './settings';
 import { computeView, sameView, type RenderView } from '@/render/quality';
-import { setOutlineWidth } from '@/render/toon';
+import { refreshToonMaterials, setOutlineWidth } from '@/render/toon';
 
 export type Updater = (dt: number, time: number) => void;
 
@@ -54,6 +54,8 @@ export class Engine {
   private readonly blitCamera = new THREE.Camera();
   /** ResizeObserver 给出的画布物理像素尺寸（比 clientWidth × dpr 取整更准） */
   private deviceSize: { w: number; h: number } | null = null;
+  /** 上下文丢了之后先别画，等 restored 把离屏缓冲重建好 */
+  private contextLost = false;
 
   constructor(private container: HTMLElement) {
     // antialias 关：画布只接收第 2 步的全屏拷贝，抗锯齿由 RenderTarget 的 MSAA 负责
@@ -112,6 +114,7 @@ export class Engine {
 
     this.input = new Input(canvas);
     this.observeSize();
+    this.watchContext(canvas);
     bus.on('settings:changed', () => this.resize());
     this.resize();
   }
@@ -222,6 +225,7 @@ export class Engine {
     // UI 模块在 Engine 之后挂载，错过了构造时的那次广播，这里补发一次
     bus.emit('render:view', this.view);
     this.renderer.setAnimationLoop(() => {
+      if (this.contextLost) return;
       let dt: number;
       if (this.visualFreeze != null) {
         this.clock.getDelta();
@@ -251,6 +255,38 @@ export class Engine {
     r.render(this.blitScene, this.blitCamera);
     this.frameMs.scene = t1 - t0;
     this.frameMs.blit = performance.now() - t1;
+  }
+
+  /**
+   * 切到后台时清掉键盘和虚拟摇杆，并丢掉 Clock 里积压的间隔，避免回来第一帧 dt 顶到上限。
+   * 上下文丢失（手机切后台常见）时 preventDefault，恢复后重建离屏缓冲并让卡通材质重编。
+   */
+  private watchContext(canvas: HTMLCanvasElement): void {
+    document.addEventListener('visibilitychange', () => {
+      this.input.releaseAll();
+      this.clock.getDelta();
+    });
+    canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      this.contextLost = true;
+    });
+    canvas.addEventListener('webglcontextrestored', () => {
+      this.contextLost = false;
+      // 旧的 GPU 资源已经随上下文一起没了。不要 dispose：新上下文里 delete 旧 id 可能删到别的对象。
+      this.target = null;
+      this.currentView = null;
+      this.blitMaterial.uniforms.tScene.value = null;
+      this.blitMaterial.needsUpdate = true;
+      this.scene.traverse((obj) => {
+        const shadow = (obj as THREE.Light).shadow as (THREE.LightShadow & { mapPass?: THREE.WebGLRenderTarget | null }) | null;
+        if (!shadow) return;
+        shadow.map = null;
+        shadow.mapPass = null;
+      });
+      refreshToonMaterials();
+      this.resize();
+      if (this.started) this.renderFrame();
+    });
   }
 
   /** 监听画布容器的尺寸。优先用 device-pixel-content-box 拿到精确的物理像素数（缩放比例是 125% / 150% 时也不差 1 像素） */
