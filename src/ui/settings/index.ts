@@ -68,6 +68,10 @@ export function mountSettings(root: HTMLElement): void {
         <input data-outline type="checkbox" />
         <span>描边</span>
       </label>
+      <label class="settings-check">
+        <input data-auto-quality type="checkbox" />
+        <span>帧率过低时自动降低画质</span>
+      </label>
       <label class="settings-row">
         <span data-sens-label>鼠标灵敏度</span>
         <input data-sens type="range" min="0.3" max="2" step="0.1" />
@@ -79,6 +83,7 @@ export function mountSettings(root: HTMLElement): void {
   root.appendChild(overlay);
 
   const outline = overlay.querySelector('[data-outline]') as HTMLInputElement;
+  const autoQuality = overlay.querySelector('[data-auto-quality]') as HTMLInputElement;
   const sens = overlay.querySelector('[data-sens]') as HTMLInputElement;
   const sensLabel = overlay.querySelector('[data-sens-label]') as HTMLElement;
   const viewInfo = overlay.querySelector('[data-view]') as HTMLElement;
@@ -112,6 +117,7 @@ export function mountSettings(root: HTMLElement): void {
     // 高清模式下没有“像素颗粒”
     densitySeg.disabled = s.renderMode !== 'pixel';
     outline.checked = s.outline;
+    autoQuality.checked = s.autoQuality;
     sens.value = String(mouse);
     sensLabel.textContent = `鼠标灵敏度 ${mouse.toFixed(1)}`;
     paintView();
@@ -136,6 +142,9 @@ export function mountSettings(root: HTMLElement): void {
   }
   outline.addEventListener('change', () => {
     updateSettings({ outline: outline.checked });
+  });
+  autoQuality.addEventListener('change', () => {
+    updateSettings({ autoQuality: autoQuality.checked });
   });
   sens.addEventListener('input', () => {
     updateSettings({ mouseSensitivity: Number(sens.value) });

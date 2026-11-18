@@ -1,0 +1,17 @@
+#ui > .auto-quality-toast {
+  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
+  z-index: 6;
+  margin: 0;
+  max-width: min(460px, calc(100% - 28px));
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ui-ink);
+  background: var(--ui-paper);
+  border: var(--ui-border);
+}

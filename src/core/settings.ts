@@ -25,6 +25,15 @@ export interface Settings {
   outline: boolean;
   /** 鼠标灵敏度 */
   mouseSensitivity: number;
+  /**
+   * 进图后如果帧率明显低于 30，自动把画质降一档。
+   * 地址栏 `?autoquality=0` 会在当次打开时关掉（不写入这里），给无头测试用。
+   */
+  autoQuality: boolean;
+  /** 玩家自己改过画质之后为 true，自动降档不再改 */
+  qualityManual: boolean;
+  /** 自动降档已经做过一次（只降一档，并只提示一次） */
+  autoQualityDone: boolean;
 }
 
 const KEY = 'ai-travel:settings';
@@ -54,6 +63,9 @@ function defaults(): Settings {
     quality: defaultQuality(touch),
     outline: true,
     mouseSensitivity: 1,
+    autoQuality: true,
+    qualityManual: false,
+    autoQualityDone: false,
   };
 }
 
@@ -77,6 +89,9 @@ function sanitize(raw: Record<string, unknown>, d: Settings): Settings {
     quality: oneOf(raw.quality, QUALITIES, d.quality),
     outline: typeof raw.outline === 'boolean' ? raw.outline : d.outline,
     mouseSensitivity: Math.min(3, Math.max(0.1, sens)),
+    autoQuality: typeof raw.autoQuality === 'boolean' ? raw.autoQuality : d.autoQuality,
+    qualityManual: raw.qualityManual === true,
+    autoQualityDone: raw.autoQualityDone === true,
   };
 }
 
@@ -100,8 +115,16 @@ export function getSettings(): Readonly<Settings> {
   return current;
 }
 
-export function updateSettings(patch: Partial<Settings>): void {
+/**
+ * @param origin `'user'`：这次如果改了画质，记成手动选择，之后自动降档不再插手。
+ *               `'auto'`：自动降档自己写回，不算玩家的选择。
+ */
+export function updateSettings(patch: Partial<Settings>, origin: 'user' | 'auto' = 'user'): void {
+  const prevQuality = current.quality;
   current = sanitize({ ...current, ...patch }, current);
+  if (origin === 'user' && patch.quality !== undefined && patch.quality !== prevQuality) {
+    current = { ...current, qualityManual: true };
+  }
   try {
     localStorage.setItem(KEY, JSON.stringify(current));
   } catch {
