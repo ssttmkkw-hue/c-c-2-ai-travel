@@ -11,6 +11,7 @@ alwaysApply: true
 4. 完成后 `npm run build` 必须通过，在任务卡里写完成记录，状态改为 `review`
 
 核心约定速记：
-- 模型只用 `@/art/kit` 拼（box/cylinder/cone/ball/group/place），颜色只用调色板
+- 模型只用 `@/art/kit` 拼（box/cylinder/cone/ball/prism/group/place），颜色只用调色板
+- 道具/建筑正面朝 +Z；角色面朝 -Z
 - 系统通信只用 `bus`（`@/core/events`）
 - 单位米，角色身高约 1.2m，物体原点在底部中心

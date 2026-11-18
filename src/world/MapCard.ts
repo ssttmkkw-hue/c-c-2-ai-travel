@@ -26,6 +26,8 @@ export interface MapCardDef {
   halfSize: number;
   /** 场景中的 NPC */
   npcs?: NpcDef[];
+  /** 开发用地图（如道具馆）：不在护照里显示，仍可用数字键进入 */
+  devOnly?: boolean;
   /** 构建场景。只能通过 ctx 往场景里加东西，卸载时会自动清理 */
   build(ctx: MapBuildContext): void | Promise<void>;
 }

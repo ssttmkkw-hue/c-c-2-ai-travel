@@ -31,14 +31,14 @@ export class World {
     const s = this.sun;
     s.position.set(30, 50, 20);
     s.castShadow = true;
-    s.shadow.mapSize.set(1024, 1024);
+    s.shadow.mapSize.set(2048, 2048);
     const c = s.shadow.camera;
     c.left = c.bottom = -60;
     c.right = c.top = 60;
     c.near = 1;
     c.far = 150;
     s.shadow.bias = -0.0005;
-    s.shadow.normalBias = 0.04;
+    s.shadow.normalBias = 0.08;
     engine.scene.add(s, s.target, this.hemi);
     bus.on('map:request', ({ id }) => void this.load(id));
   }

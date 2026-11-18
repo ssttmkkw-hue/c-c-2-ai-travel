@@ -1,17 +1,17 @@
 # 任务看板
 
-状态：`todo` 待做 · `doing` 进行中 · `review` 待 Claude 审阅 · `done` 完成 · `blocked` 卡住（写明原因）
+状态：`todo` 待做 · `todo（小修）` 审阅后小改，改完直接 `done` · `doing` 进行中 · `review` 待 Claude 审阅 · `done` 完成 · `blocked` 卡住（写明原因）
 
 **Cursor**：挑 `todo` 且「依赖」都已 `done` 的卡（依赖为 `review` 也可以先开工）。改状态时**同时更新本表和任务卡头部**。
 **Claude**：审阅 `review` 的卡，通过 → `done`，不通过 → 在卡底部写审阅意见，状态回 `todo`。
 
 | ID | 任务 | 类型 | 依赖 | 状态 |
 |---|---|---|---|---|
-| [T01](T01-props-library.md) | 通用道具库 | 🎨 美术 | — | review |
+| [T01](T01-props-library.md) | 通用道具库 | 🎨 美术 | — | todo（小修） |
 | [T02](T02-map-tokyo.md) | 东京地图卡完整版 | 🎨 美术 | T01 | todo |
-| [T03](T03-avatar-model.md) | Q 版角色模型 + 程序动画 | 🎨 美术 | — | review |
+| [T03](T03-avatar-model.md) | Q 版角色模型 + 程序动画 | 🎨 美术 | — | todo（小修） |
 | [T04](T04-outfits.md) | 服装系统 + 当地服装 | 🎨 美术 | T03 | todo |
-| [T05](T05-ui-passport.md) | 护照选卡界面 | 🖥 UI | — | review |
+| [T05](T05-ui-passport.md) | 护照选卡界面 | 🖥 UI | — | done |
 | [T06](T06-ui-settings-hud.md) | 设置面板 + 正式 HUD | 🖥 UI | — | todo |
 | [T07](T07-travel-transition.md) | 地图切换过场动画 | 🖥 UI | T05 | todo |
 | [T08](T08-map-giza.md) | 吉萨地图卡完整版 | 🎨 美术 | T01 | todo |

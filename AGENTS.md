@@ -23,7 +23,7 @@
 
 1. **不要修改「🔒 Claude 保留区」的文件**。如果确实需要改接口，在任务卡「完成记录」里写“需要 Claude 修改：…”，然后用变通方案或先停下。
 2. **所有颜色来自调色板**（`ctx.palette` / 地图卡的 `palette.ts`）。不要在模型代码里散落 `#xxxxxx`（角色肤色、木头/石头等“材质固有色”可以集中写在 `src/art/colors.ts`）。
-3. **所有模型用 `src/art/kit.ts` 的函数拼**（box / cylinder / cone / ball / group）。不要直接 `new MeshStandardMaterial`，不要加载外部贴图或 glTF 模型（除非任务卡明确允许）。
+3. **所有模型用 `src/art/kit.ts` 的函数拼**（box / cylinder / cone / ball / prism / group）。不要直接 `new MeshStandardMaterial`，不要加载外部贴图或 glTF 模型（除非任务卡明确允许）。
 4. **系统之间用 `bus`（`src/core/events.ts`）通信**。UI 不直接调用 World / Player 的方法。
 5. 不引入新的 npm 依赖（除非任务卡允许）。
 6. TypeScript strict，`npm run build` 零错误。

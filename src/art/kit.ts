@@ -10,6 +10,8 @@
  * 约定：
  * - 单位 = 米。角色身高约 1.2m（Q 版）。
  * - 物体原点在“底部中心”（放在地面上 y=0 即可）。kit 函数的 y 参数是**部件中心**的高度。
+ * - 道具/建筑的“正面”（门、窗、招牌）朝 **+Z**，这样 `obj.lookAt(目标点)` 就能让正面对着目标。
+ *   （角色例外：Avatar 面朝 -Z，由 Player 处理，地图卡不用管）
  * - 颜色一律传入调色板里的颜色。
  */
 import * as THREE from 'three';
@@ -56,6 +58,25 @@ export function cone(r: number, h: number, segments: number, color: THREE.ColorR
 /** 低模球（detail 0 = 二十面体，很 low-poly） */
 export function ball(r: number, color: THREE.ColorRepresentation, o: PartOpts & { detail?: number } = {}): THREE.Mesh {
   return finish(new THREE.IcosahedronGeometry(r, o.detail ?? 0), color, o);
+}
+
+/**
+ * 三棱柱（人字屋顶 / 屋脊 / 帐篷）。屋脊沿 X 轴，宽 w；底边沿 Z 轴，深 d；高 h。
+ * 几何中心在包围盒中心（y 参数 = 屋顶中心高度，屋顶底面在 y - h/2）。
+ */
+export function prism(w: number, h: number, d: number, color: THREE.ColorRepresentation, o: PartOpts = {}): THREE.Mesh {
+  return finish(prismGeometry(w, h, d), color, o);
+}
+
+function prismGeometry(w: number, h: number, d: number): THREE.BufferGeometry {
+  const x = w / 2, y = h / 2, z = d / 2;
+  const A = [-x, -y, z], B = [x, -y, z], C = [x, y, 0], D = [-x, y, 0], E = [-x, -y, -z], F = [x, -y, -z];
+  // 每个三角形逆时针（从外侧看），非索引 → 平直法线
+  const tris = [A, B, C, A, C, D, F, E, D, F, D, C, A, E, F, A, F, B, A, D, E, B, F, C];
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(tris.flat(), 3));
+  geo.computeVertexNormals();
+  return geo;
 }
 
 /** 把多个部件组合成一个物体，可整体设置位置/旋转 */

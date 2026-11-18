@@ -12,7 +12,7 @@ src/
 │   ├── toon.ts          卡通材质（3 阶硬阴影）、反向外壳描边
 │   └── palette.ts       调色板类型
 ├── art/
-│   ├── kit.ts           🔒 基础件：box / cylinder / cone / ball / group / place
+│   ├── kit.ts           🔒 基础件：box / cylinder / cone / ball / prism / group / place
 │   ├── colors.ts        🎨 材质固有色
 │   └── props/           🎨 道具库
 ├── world/

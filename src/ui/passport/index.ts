@@ -7,6 +7,9 @@ import { MAP_CARDS } from '@/world/registry';
 import type { MapCardDef } from '@/world/MapCard';
 import './passport.css';
 
+/** 护照只显示正式地图卡（devOnly 的道具馆等只能用数字键进入） */
+const CARDS = MAP_CARDS.filter((c) => !c.devOnly);
+
 const COLS_BREAK = 720;
 
 export function mountPassport(root: HTMLElement): void {
@@ -34,7 +37,7 @@ export function mountPassport(root: HTMLElement): void {
   let currentId: string | null = null;
   let selected = 0;
 
-  MAP_CARDS.forEach((card, index) => {
+  CARDS.forEach((card, index) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'passport-card';
@@ -63,14 +66,14 @@ export function mountPassport(root: HTMLElement): void {
     overlay.hidden = !open;
     bus.emit('ui:modal', { id: 'passport', open });
     if (open) {
-      const idx = MAP_CARDS.findIndex((c) => c.id === currentId);
+      const idx = CARDS.findIndex((c) => c.id === currentId);
       selected = idx >= 0 ? idx : 0;
       paintSelection();
     }
   }
 
   function depart(index: number): void {
-    const card = MAP_CARDS[index];
+    const card = CARDS[index];
     if (!card) return;
     selected = index;
     bus.emit('map:request', { id: card.id });
@@ -78,7 +81,7 @@ export function mountPassport(root: HTMLElement): void {
   }
 
   function move(dx: number, dy: number): void {
-    const n = MAP_CARDS.length;
+    const n = CARDS.length;
     if (!n) return;
     const c = cols();
     const col = selected % c;
@@ -108,7 +111,7 @@ export function mountPassport(root: HTMLElement): void {
         const el = document.createElement('span');
         el.className = 'passport-stamp';
         el.textContent = '当前位置';
-        const accent = MAP_CARDS.find((c) => c.id === btn.dataset.id)?.palette.accent[0] ?? '#c03030';
+        const accent = CARDS.find((c) => c.id === btn.dataset.id)?.palette.accent[0] ?? '#c03030';
         el.style.color = accent;
         el.style.borderColor = accent;
         btn.appendChild(el);

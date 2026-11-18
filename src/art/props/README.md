@@ -10,7 +10,7 @@ export function sakuraTree(p: Palette, variant = 0): THREE.Group
 约定：
 - 文件按类别分：`trees.ts` `street.ts`（路灯/长椅/自动售货机/邮筒）`buildings.ts` `nature.ts`（石头/草丛）…
 - 统一从 `src/art/props/index.ts` 导出
-- 原点在底部中心，朝向 -Z 为“正面”
+- 原点在底部中心，**正面（门/窗/招牌）朝 +Z**。摆放时可用 `obj.lookAt(x, 0, z)` 让正面对着某点
 - 函数注释写上：尺寸（米）、大约三角面数、适合哪些地图
 - 有 `variant` 参数时用它产生小变化（高度、颜色索引），不要在道具内部用 Math.random（布局随机性用地图的 `ctx.rand`）
 - 每做完一批道具，更新下面的清单
