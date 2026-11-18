@@ -1,19 +1,19 @@
 import type { Palette } from '@/render/palette';
 
-/** 埃及：正午，沙金 + 天蓝 */
+/** 吉萨：正午，沙金 + 天蓝 */
 export const palette: Palette = {
   sky: '#7ec8f0',
-  fog: '#e8d6a8',
-  fogNear: 50,
-  fogFar: 160,
-  sun: '#fff1cc',
-  sunIntensity: 2.8,
-  skyLight: '#bfe6ff',
-  groundLight: '#a8844a',
-  ambientIntensity: 1.1,
-  ground: '#e6c88a',
-  primary: ['#f0d9a0', '#d9b874', '#c49a55'],
-  accent: ['#2f6fb5', '#d94f30', '#f5e6b8'],
-  foliage: ['#5d8c3a', '#3e6b2b'],
+  fog: '#f3e6c0',
+  fogNear: 48,
+  fogFar: 128,
+  sun: '#fff4d2',
+  sunIntensity: 2.7,
+  skyLight: '#c5e7ff',
+  groundLight: '#c4a06a',
+  ambientIntensity: 1.05,
+  ground: '#e4c48a',
+  primary: ['#f4e2b4', '#e2c48a', '#c9a25c', '#a67c45'],
+  accent: ['#2a73c2', '#d4532c', '#f0d078', '#7a1f2b'],
+  foliage: ['#6d9a40', '#3f6b2c', '#8aaa4a'],
   outline: '#3a2618',
 };
