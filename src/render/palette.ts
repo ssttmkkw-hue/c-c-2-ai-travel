@@ -41,6 +41,37 @@ export interface Palette {
   outline: string;
 }
 
+/** 一张图上的时段。默认调色板就是这张图现在的时刻，不要为了补预设去改它 */
+export type TimeId = 'dawn' | 'noon' | 'dusk';
+
+export const TIME_IDS: readonly TimeId[] = ['dawn', 'noon', 'dusk'];
+
+/**
+ * 相对默认调色板的光照 / 天空覆盖。
+ * 几何体的颜色已经烘进顶点色，这里只放会写成 uniform 的字段。
+ * sunDirection 的 y 在单位向量上不要低于约 0.2，否则影子会被拉出阴影相机。
+ */
+export type TimeOfDay = Partial<
+  Pick<
+    Palette,
+    | 'sky'
+    | 'skyTop'
+    | 'cloudDensity'
+    | 'fog'
+    | 'fogNear'
+    | 'fogFar'
+    | 'sun'
+    | 'sunIntensity'
+    | 'sunDirection'
+    | 'exposure'
+    | 'saturation'
+    | 'skyLight'
+    | 'groundLight'
+    | 'ambientIntensity'
+    | 'outline'
+  >
+>;
+
 /** 从数组中按索引取色（自动循环），方便 kit.box(..., pick(p.primary, i)) */
 export function pick(colors: string[], i: number): string {
   return colors[((i % colors.length) + colors.length) % colors.length];

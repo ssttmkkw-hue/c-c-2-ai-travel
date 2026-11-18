@@ -479,3 +479,26 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 
 - `npm run typecheck` 通过。`npm run shots` 三张图 0.00%。
 - iPhone 14 竖屏（390 CSS 宽，`hasTouch`）：fov 约 76.9°，地点标签在视口内（top/left 14）。截图 `/workspace/c-c-2-shots/fable-r2-phone-tokyo.png`、`fable-r2-phone-egypt.png`。角色、前方路面和地标都在画面里，不是一条窄缝。这两张不进 `tools/baseline`。
+
+---
+
+## R1-5 · 时段光照第一刀
+
+### `src/render/palette.ts`、`src/world/MapCard.ts`、`src/core/events.ts`、`src/world/World.ts`
+
+- **改了什么**：`TimeId` / `TimeOfDay`。地图卡可选 `times`。`World.setTimeOfDay(time, durationSec)` 从当前光照插到预设，只写雾、太阳、半球光、天空穹顶、曝光和描边色。`durationSec = 0` 立刻跳。总线事件 `time:changed`（`time: null` 表示回到默认调色板）。地址栏 `?time=dawn|noon|dusk` 在加载时套用（这张图没有该预设就忽略）。太阳方向先归一化，y 低于 0.2 就抬到 0.2 再归一化；现有三张默认方向都高于这个值，所以默认影子不变。过渡时阴影焦点跟着新方向走，换基的那一帧影子边缘会跳一下。
+- **为什么**：同一张图换氛围，又不重烘顶点色、不动默认画面。
+- **影响**：`MapCardDef` 多了一个可选字段，旧卡不用填。几何体颜色、水面在建造时取的调色板颜色都不变。没有夜晚，没有灯笼发光。
+
+### 各地图补的预设（默认调色板一个字没改）
+
+| 图 | 默认 | 新增 |
+|---|---|---|
+| 东京 | 黄昏 | 清晨、正午 |
+| 巴黎 | 清晨 | 黄昏、正午 |
+| 吉萨 | 正午 | 黄昏、清晨 |
+
+### 验证
+
+- `npm run typecheck` 通过。`npm run shots`：原来三张 0.00%。新视角缺基线时脚本会新建（没有 `--update`），第二次再跑这 6 张也是 0.00%，`CONSOLE_ERRORS 0`。基线：`tools/baseline/tokyo-noon.png`、`tokyo-dawn.png`、`paris-dusk.png`、`paris-noon.png`、`egypt-dusk.png`、`egypt-dawn.png`。
+- 开发模式可以直接 `__game.world.setTimeOfDay('noon', 1.2)`。

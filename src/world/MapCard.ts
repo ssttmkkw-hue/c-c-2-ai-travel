@@ -4,7 +4,7 @@
  * 新增地图卡：复制 src/maps/_template/，在 src/world/registry.ts 注册。规范见 docs/MAP_CARD_SPEC.md
  */
 import type * as THREE from 'three';
-import type { Palette } from '@/render/palette';
+import type { Palette, TimeId, TimeOfDay } from '@/render/palette';
 import type { NpcDef } from '@/npc/types';
 
 export interface MapCardDef {
@@ -18,8 +18,13 @@ export interface MapCardDef {
   country: string;
   /** 一句话介绍（显示在地图卡片上） */
   tagline: string;
-  /** 调色板 */
+  /** 调色板。这就是这张图的默认时刻，现有画面以它为准 */
   palette: Palette;
+  /**
+   * 可选的其他时刻（只覆盖光照和天空）。
+   * 不要把「现在的默认时刻」再写一份进来。
+   */
+  times?: Partial<Record<TimeId, TimeOfDay>>;
   /** 出生点：位置 [x, z] + 朝向（弧度，0 = 朝 -Z 方向） */
   spawn: { x: number; z: number; yaw: number };
   /** 可行走范围：以原点为中心的正方形半边长（米） */

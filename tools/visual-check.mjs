@@ -31,6 +31,13 @@ const VIEWS = [
   { id: 'tokyo', x: 0, z: 22, yaw: 0, distance: 8, pitch: -0.32 },
   { id: 'egypt', x: 0, z: 16, yaw: 0, distance: 9, pitch: -0.22 },
   { id: 'paris', x: 0, z: 8, yaw: 0, distance: 9, pitch: -0.18 },
+  // 默认时刻的三张不要改。下面是后加的时段，缺文件时会新建，不要用 --update 覆盖上面三张。
+  { id: 'tokyo-noon', map: 'tokyo', time: 'noon', x: 0, z: 22, yaw: 0, distance: 8, pitch: -0.32 },
+  { id: 'tokyo-dawn', map: 'tokyo', time: 'dawn', x: 0, z: 22, yaw: 0, distance: 8, pitch: -0.32 },
+  { id: 'paris-dusk', map: 'paris', time: 'dusk', x: 0, z: 8, yaw: 0, distance: 9, pitch: -0.18 },
+  { id: 'paris-noon', map: 'paris', time: 'noon', x: 0, z: 8, yaw: 0, distance: 9, pitch: -0.18 },
+  { id: 'egypt-dusk', map: 'egypt', time: 'dusk', x: 0, z: 16, yaw: 0, distance: 9, pitch: -0.22 },
+  { id: 'egypt-dawn', map: 'egypt', time: 'dawn', x: 0, z: 16, yaw: 0, distance: 9, pitch: -0.22 },
 ];
 
 async function exists(file) {
@@ -49,19 +56,21 @@ async function shoot(page, view) {
     g.engine.freezeVisual(v.freezeAt);
     const ui = document.getElementById('ui');
     if (ui) ui.style.visibility = 'hidden';
-    if (g.world.current?.id !== v.id) {
+    const mapId = v.map || v.id;
+    if (g.world.current?.id !== mapId) {
       await new Promise((resolve, reject) => {
-        const timer = window.setTimeout(() => reject(new Error(`地图 ${v.id} 加载超时`)), 15000);
+        const timer = window.setTimeout(() => reject(new Error(`地图 ${mapId} 加载超时`)), 15000);
         const off = g.bus.on('map:loaded', ({ card }) => {
-          if (card.id !== v.id) return;
+          if (card.id !== mapId) return;
           window.clearTimeout(timer);
           off();
           resolve();
         });
-        g.bus.emit('map:request', { id: v.id });
+        g.bus.emit('map:request', { id: mapId });
       });
     }
     g.engine.freezeVisual(v.freezeAt);
+    g.world.setTimeOfDay(v.time || null, 0);
     g.player.teleport(v.x, v.z, v.yaw);
     Object.assign(g.player.cam, { yaw: v.yaw, distance: v.distance, pitch: v.pitch, mode: 'third' });
     await new Promise((r) => {

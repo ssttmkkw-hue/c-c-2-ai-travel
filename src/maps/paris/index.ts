@@ -10,7 +10,7 @@ import * as kit from '@/art/kit';
 import { COLORS } from '@/art/colors';
 import { addGroundDetail } from '@/art/props';
 import { addFallingParticles } from '@/fx/particles';
-import { palette } from './palette';
+import { palette, times } from './palette';
 import { TOWER, createEiffel } from './landmark';
 import { buildStreet } from './street';
 import { buildQuay } from './quay';
@@ -27,6 +27,7 @@ const card: MapCardDef = {
   country: '法国',
   tagline: '清晨薄雾里的塞纳河与铁塔',
   palette,
+  times,
   spawn: { x: 0, z: 20, yaw: 0 },
   halfSize: 45,
   npcs: [

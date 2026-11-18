@@ -12,7 +12,7 @@ import {
   sakuraTree, bush, rock, flowerPatch, stoneLantern, fenceSegment, tower, house, addGroundDetail,
 } from '@/art/props';
 import { addFallingParticles } from '@/fx/particles';
-import { palette } from './palette';
+import { palette, times } from './palette';
 import {
   createTorii, createShrine, createKomainu, createRedWhiteTower,
   TORII_PILLAR_X, TORII_Z, SHRINE_Z, SHRINE_FRONT_Z,
@@ -31,6 +31,7 @@ const card: MapCardDef = {
   country: '日本',
   tagline: '樱花、鸟居与霓虹街角',
   palette,
+  times,
   spawn: { x: 0, z: 22, yaw: 0 },
   halfSize: 45,
   npcs: [

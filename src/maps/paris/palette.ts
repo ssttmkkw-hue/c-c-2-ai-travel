@@ -1,4 +1,4 @@
-import type { Palette } from '@/render/palette';
+import type { Palette, TimeOfDay } from '@/render/palette';
 
 /**
  * 巴黎：清晨薄雾。奶油白墙、灰蓝屋顶，红棚和金色是小面积点缀。
@@ -22,4 +22,38 @@ export const palette: Palette = {
   accent: ['#c4473a', '#e2b34a', '#6a90a8'],
   foliage: ['#7d9a68', '#3e6b48', '#a3b98a'],
   outline: '#1e2c3d',
+};
+
+/** 默认调色板是清晨。补黄昏和正午 */
+export const times: { dusk: TimeOfDay; noon: TimeOfDay } = {
+  dusk: {
+    sky: '#f0b89a',
+    skyTop: '#7a6aa8',
+    cloudDensity: 0.55,
+    fog: '#f3d2c0',
+    fogNear: 34,
+    fogFar: 105,
+    sun: '#ffc49a',
+    sunIntensity: 1.85,
+    sunDirection: [0.58, 0.3, -0.4],
+    skyLight: '#ffd0c0',
+    groundLight: '#6a5348',
+    ambientIntensity: 1.15,
+    exposure: 1.0,
+  },
+  noon: {
+    sky: '#9fd0f2',
+    skyTop: '#3f86d6',
+    cloudDensity: 0.28,
+    fog: '#e4eef6',
+    fogNear: 44,
+    fogFar: 120,
+    sun: '#fff8ea',
+    sunIntensity: 2.4,
+    sunDirection: [0.22, 0.9, 0.28],
+    skyLight: '#d5ebff',
+    groundLight: '#c8b89a',
+    ambientIntensity: 1.08,
+    exposure: 1.05,
+  },
 };

@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import type { Engine } from '@/core/Engine';
 import { bus } from '@/core/events';
 import type { MapCardDef, MapBuildContext } from './MapCard';
-import type { Palette } from '@/render/palette';
+import { TIME_IDS, type Palette, type TimeId, type TimeOfDay } from '@/render/palette';
 import { getSettings } from '@/core/settings';
 import { shadowConfig } from '@/render/quality';
 import { refreshToonMaterials, setOutlineColor, setShadowTuning } from '@/render/toon';
@@ -55,6 +55,12 @@ export class World {
   private readonly shadowForward = new THREE.Vector3();
   private readonly shadowFocus = new THREE.Vector3();
   private readonly worldUp = new THREE.Vector3(0, 1, 0);
+  /** 时段插值。blendT >= 1 表示已经停在目标上 */
+  private blendT = 1;
+  private blendDur = 1;
+  private readonly litFrom = createLit();
+  private readonly litTo = createLit();
+  private readonly litNow = createLit();
 
   constructor(private engine: Engine) {
     const s = this.sun;
@@ -71,7 +77,8 @@ export class World {
     bus.on('settings:changed', () => this.applyShadowQuality());
     // Player 在 World 之后才注册自己的 onUpdate。微任务排到同步初始化之后，
     // 这样阴影焦点用的是本帧已经写好的玩家位置，而不是上一帧的。
-    queueMicrotask(() => engine.onUpdate((_dt, t) => {
+    queueMicrotask(() => engine.onUpdate((dt, t) => {
+      this.tickTime(dt);
       this.updateShadowFocus();
       this.sky.setTime(t);
       const st = getSettings();
@@ -124,14 +131,42 @@ export class World {
       rand,
       getPlayerPosition: () => this.playerPosition,
     };
+    this.current = card;
     this.applyPalette(card.palette);
+    const queried = timeFromQuery();
+    if (queried && card.times?.[queried]) this.setTimeOfDay(queried, 0);
     await card.build(ctx);
     this.batch(card, root, updaters);
     this.npcs = spawnNpcs(ctx, card.npcs ?? []);
     this.engine.scene.add(root);
     this.root = root;
-    this.current = card;
     bus.emit('map:loaded', { card });
+  }
+
+  /**
+   * 切到这张图的某个时刻。null = 回到默认调色板。
+   * durationSec 为 0 时立刻跳过去；过渡期间每帧只改光照 uniform。
+   * 太阳方向的单位向量 y 低于 0.2 会被抬起来，避免影子拉出阴影范围。
+   * 过渡时阴影焦点照常跟着新的光方向走，光空间网格换基时影子边缘会跳一次。
+   */
+  setTimeOfDay(time: TimeId | null, durationSec = 0): void {
+    const card = this.current;
+    if (!card) return;
+    if (time && !card.times?.[time]) return;
+    copyLit(this.litNow, this.litFrom);
+    if (time) fillTime(card.palette, card.times![time]!, this.litTo);
+    else fillPalette(card.palette, this.litTo);
+    const dur = Math.max(0, durationSec);
+    if (dur <= 0) {
+      this.blendT = 1;
+      copyLit(this.litTo, this.litNow);
+      this.pushLight(this.litNow);
+    } else {
+      this.blendDur = dur;
+      this.blendT = 0;
+      this.pushLight(this.litFrom);
+    }
+    bus.emit('time:changed', { mapId: card.id, time });
   }
 
   private unload(): void {
@@ -187,24 +222,59 @@ export class World {
   }
 
   private applyPalette(p: Palette): void {
+    this.blendT = 1;
+    fillPalette(p, this.litNow);
+    copyLit(this.litNow, this.litFrom);
+    copyLit(this.litNow, this.litTo);
+    this.pushLight(this.litNow);
+  }
+
+  private tickTime(dt: number): void {
+    if (this.blendT >= 1) return;
+    this.blendT = Math.min(1, this.blendT + dt / this.blendDur);
+    lerpLit(this.litFrom, this.litTo, this.blendT, this.litNow);
+    this.pushLight(this.litNow);
+  }
+
+  /** 把一份光照写进雾、太阳、半球光、天空和调色。几何体顶点色不动 */
+  private pushLight(lit: Lit): void {
     const scene = this.engine.scene;
-    // 天空 = 穹顶渐变（地平线是雾色 → 天顶色）；background 只是穹顶没画到时的兜底
-    scene.background = new THREE.Color(p.fog);
-    scene.fog = new THREE.Fog(p.fog, p.fogNear, p.fogFar);
-    this.setSunDirection(p.sunDirection ?? DEFAULT_SUN_DIR);
-    this.sky.set(p.skyTop ?? p.sky, p.sky, p.fog, p.sun, this.sun.position, p.cloudDensity ?? 0.4);
-    this.engine.setGrade(p.exposure ?? 1, p.saturation ?? DEFAULT_SATURATION);
-    this.sun.color.set(p.sun);
-    this.sun.intensity = p.sunIntensity;
-    this.hemi.color.set(p.skyLight);
-    this.hemi.groundColor.set(p.groundLight);
-    this.hemi.intensity = p.ambientIntensity;
-    setOutlineColor(p.outline);
+    const bg = scene.background instanceof THREE.Color ? scene.background : new THREE.Color();
+    bg.copy(lit.fog);
+    scene.background = bg;
+    const fog = scene.fog instanceof THREE.Fog ? scene.fog : new THREE.Fog(0x000000, lit.fogNear, lit.fogFar);
+    fog.color.copy(lit.fog);
+    fog.near = lit.fogNear;
+    fog.far = lit.fogFar;
+    scene.fog = fog;
+    this.setSunDirection(lit.sunDir);
+    this.sky.set(lit.skyTop, lit.sky, lit.fog, lit.sun, this.sun.position, lit.cloud);
+    this.engine.setGrade(lit.exposure, lit.saturation);
+    this.sun.color.copy(lit.sun);
+    this.sun.intensity = lit.sunIntensity;
+    this.hemi.color.copy(lit.skyLight);
+    this.hemi.groundColor.copy(lit.groundLight);
+    this.hemi.intensity = lit.ambient;
+    setOutlineColor(lit.outline);
   }
 
   /** 记下太阳方向，并算出和 three 的 Camera.lookAt（up = +Y）一致的阴影相机坐标轴 */
-  private setSunDirection(dir: readonly [number, number, number]): void {
-    this.sunOffset.set(dir[0], dir[1], dir[2]).setLength(SUN_DISTANCE);
+  private setSunDirection(dir: THREE.Vector3 | readonly [number, number, number]): void {
+    const x = dir instanceof THREE.Vector3 ? dir.x : dir[0];
+    const y = dir instanceof THREE.Vector3 ? dir.y : dir[1];
+    const z = dir instanceof THREE.Vector3 ? dir.z : dir[2];
+    const len = Math.hypot(x, y, z) || 1;
+    // 默认调色板的 y 都高于 0.2，这条路径和原来的 setLength 一样
+    if (y / len >= 0.2) {
+      this.sunOffset.set(x, y, z).setLength(SUN_DISTANCE);
+    } else {
+      const nx = x / len;
+      const nz = z / len;
+      const hy = 0.2;
+      const h = Math.sqrt(Math.max(0, 1 - hy * hy));
+      const hlen = Math.hypot(nx, nz) || 1;
+      this.sunOffset.set((nx / hlen) * h, hy, (nz / hlen) * h).setLength(SUN_DISTANCE);
+    }
     this.shadowForward.copy(this.sunOffset).normalize();
     this.shadowRight.crossVectors(this.worldUp, this.shadowForward);
     if (this.shadowRight.lengthSq() < 1e-8) this.shadowRight.set(1, 0, 0);
@@ -228,4 +298,126 @@ export class World {
     this.sun.target.position.copy(this.shadowFocus);
     this.sun.position.copy(this.shadowFocus).add(this.sunOffset);
   }
+}
+
+interface Lit {
+  sky: THREE.Color;
+  skyTop: THREE.Color;
+  fog: THREE.Color;
+  fogNear: number;
+  fogFar: number;
+  sun: THREE.Color;
+  sunIntensity: number;
+  sunDir: THREE.Vector3;
+  skyLight: THREE.Color;
+  groundLight: THREE.Color;
+  ambient: number;
+  exposure: number;
+  saturation: number;
+  outline: THREE.Color;
+  cloud: number;
+}
+
+function createLit(): Lit {
+  return {
+    sky: new THREE.Color(),
+    skyTop: new THREE.Color(),
+    fog: new THREE.Color(),
+    fogNear: 1,
+    fogFar: 100,
+    sun: new THREE.Color(),
+    sunIntensity: 1,
+    sunDir: new THREE.Vector3(1, 1, 0),
+    skyLight: new THREE.Color(),
+    groundLight: new THREE.Color(),
+    ambient: 1,
+    exposure: 1,
+    saturation: DEFAULT_SATURATION,
+    outline: new THREE.Color(),
+    cloud: 0.4,
+  };
+}
+
+function fillPalette(p: Palette, into: Lit): void {
+  const dir = p.sunDirection ?? DEFAULT_SUN_DIR;
+  into.sky.set(p.sky);
+  into.skyTop.set(p.skyTop ?? p.sky);
+  into.fog.set(p.fog);
+  into.fogNear = p.fogNear;
+  into.fogFar = p.fogFar;
+  into.sun.set(p.sun);
+  into.sunIntensity = p.sunIntensity;
+  into.sunDir.set(dir[0], dir[1], dir[2]);
+  into.skyLight.set(p.skyLight);
+  into.groundLight.set(p.groundLight);
+  into.ambient = p.ambientIntensity;
+  into.exposure = p.exposure ?? 1;
+  into.saturation = p.saturation ?? DEFAULT_SATURATION;
+  into.outline.set(p.outline);
+  into.cloud = p.cloudDensity ?? 0.4;
+}
+
+function fillTime(base: Palette, time: TimeOfDay, into: Lit): void {
+  fillPalette(base, into);
+  if (time.sky) into.sky.set(time.sky);
+  if (time.skyTop) into.skyTop.set(time.skyTop);
+  if (time.fog) into.fog.set(time.fog);
+  if (time.fogNear !== undefined) into.fogNear = time.fogNear;
+  if (time.fogFar !== undefined) into.fogFar = time.fogFar;
+  if (time.sun) into.sun.set(time.sun);
+  if (time.sunIntensity !== undefined) into.sunIntensity = time.sunIntensity;
+  if (time.sunDirection) into.sunDir.set(time.sunDirection[0], time.sunDirection[1], time.sunDirection[2]);
+  if (time.skyLight) into.skyLight.set(time.skyLight);
+  if (time.groundLight) into.groundLight.set(time.groundLight);
+  if (time.ambientIntensity !== undefined) into.ambient = time.ambientIntensity;
+  if (time.exposure !== undefined) into.exposure = time.exposure;
+  if (time.saturation !== undefined) into.saturation = time.saturation;
+  if (time.outline) into.outline.set(time.outline);
+  if (time.cloudDensity !== undefined) into.cloud = time.cloudDensity;
+}
+
+function copyLit(src: Lit, dst: Lit): void {
+  dst.sky.copy(src.sky);
+  dst.skyTop.copy(src.skyTop);
+  dst.fog.copy(src.fog);
+  dst.fogNear = src.fogNear;
+  dst.fogFar = src.fogFar;
+  dst.sun.copy(src.sun);
+  dst.sunIntensity = src.sunIntensity;
+  dst.sunDir.copy(src.sunDir);
+  dst.skyLight.copy(src.skyLight);
+  dst.groundLight.copy(src.groundLight);
+  dst.ambient = src.ambient;
+  dst.exposure = src.exposure;
+  dst.saturation = src.saturation;
+  dst.outline.copy(src.outline);
+  dst.cloud = src.cloud;
+}
+
+function lerpLit(a: Lit, b: Lit, t: number, into: Lit): void {
+  into.sky.copy(a.sky).lerp(b.sky, t);
+  into.skyTop.copy(a.skyTop).lerp(b.skyTop, t);
+  into.fog.copy(a.fog).lerp(b.fog, t);
+  into.fogNear = a.fogNear + (b.fogNear - a.fogNear) * t;
+  into.fogFar = a.fogFar + (b.fogFar - a.fogFar) * t;
+  into.sun.copy(a.sun).lerp(b.sun, t);
+  into.sunIntensity = a.sunIntensity + (b.sunIntensity - a.sunIntensity) * t;
+  into.sunDir.copy(a.sunDir).lerp(b.sunDir, t);
+  into.skyLight.copy(a.skyLight).lerp(b.skyLight, t);
+  into.groundLight.copy(a.groundLight).lerp(b.groundLight, t);
+  into.ambient = a.ambient + (b.ambient - a.ambient) * t;
+  into.exposure = a.exposure + (b.exposure - a.exposure) * t;
+  into.saturation = a.saturation + (b.saturation - a.saturation) * t;
+  into.outline.copy(a.outline).lerp(b.outline, t);
+  into.cloud = a.cloud + (b.cloud - a.cloud) * t;
+}
+
+function timeFromQuery(): TimeId | null {
+  try {
+    const v = new URLSearchParams(window.location.search).get('time');
+    if (v && (TIME_IDS as readonly string[]).includes(v)) return v as TimeId;
+  } catch {
+    /* 没有 window 时当没写 */
+  }
+  return null;
 }

@@ -10,7 +10,7 @@ import * as kit from '@/art/kit';
 import { COLORS } from '@/art/colors';
 import { house, rock, addGroundDetail } from '@/art/props';
 import { addFallingParticles } from '@/fx/particles';
-import { palette } from './palette';
+import { palette, times } from './palette';
 import {
   createPyramid, createSphinx, createObelisk,
   GREAT, KHAFRE, MENKAURE, SPHINX,
@@ -29,6 +29,7 @@ const card: MapCardDef = {
   country: '埃及',
   tagline: '正午烈日下的金字塔与尼罗河',
   palette,
+  times,
   spawn: { x: 0, z: 18, yaw: 0 },
   halfSize: 45,
   npcs: [

@@ -4,6 +4,7 @@
  */
 import type { MapCardDef } from '@/world/MapCard';
 import type { RenderView } from '@/render/quality';
+import type { TimeId } from '@/render/palette';
 import type { Settings } from './settings';
 
 export interface GameEvents {
@@ -36,6 +37,8 @@ export interface GameEvents {
    * 每个弹窗用固定 id，打开发 open:true，关闭发 open:false。
    */
   'ui:modal': { id: string; open: boolean };
+  /** 时段切换。time 为 null 表示回到这张图的默认调色板 */
+  'time:changed': { mapId: string; time: TimeId | null };
 }
 
 type Handler<T> = (payload: T) => void;
