@@ -1,0 +1,66 @@
+#ui > .hud {
+  pointer-events: none;
+}
+
+.hud-place {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  color: var(--ui-fg);
+  background: var(--ui-bg);
+  border: var(--ui-border);
+  animation: hud-fade-in 0.45s steps(4, end);
+}
+
+@keyframes hud-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hud-hints {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  margin: 0;
+  max-width: min(420px, calc(100% - 28px));
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: right;
+  color: var(--ui-fg);
+  background: var(--ui-bg);
+  border: var(--ui-border);
+  transition: opacity 0.6s steps(4, end);
+}
+
+.hud-hints.is-dim {
+  opacity: 0;
+}
+
+.hud-talk {
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  color: var(--ui-ink);
+  background: var(--ui-paper);
+  border: var(--ui-border);
+}
+
+.hud-talk[hidden] {
+  display: none;
+}

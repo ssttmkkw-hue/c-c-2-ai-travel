@@ -1,6 +1,6 @@
 # T06 · 设置面板 + 正式 HUD
 
-- **状态**：todo
+- **状态**：review
 - **类型**：🖥 UI
 - **依赖**：—
 - **预估规模**：S
@@ -31,17 +31,20 @@
 
 ## 验收清单
 
-- [ ] `npm run build` 通过
-- [ ] 设置改完刷新页面仍然保留
-- [ ] 打开设置面板时游戏不响应 WASD
+- [x] `npm run build` 通过
+- [x] 设置改完刷新页面仍然保留
+- [x] 打开设置面板时游戏不响应 WASD
 
 ---
 
 ## 完成记录（Cursor 填写）
 
-- 做了什么：
-- 新增/修改文件：
-- 截图或说明：
-- 遗留问题 / 需要 Claude 修改的地方：
+- 做了什么：正式 HUD（左上地点淡入、右下操作提示数秒后淡出、H 再显示、中下「按 E 交谈」）+ 设置面板（Esc 露出齿轮再点击，或 P 打开）。像素 1~8、描边、灵敏度 0.3~2 走 `updateSettings`，开关发 `ui:modal` id `settings`。护照打开时 P 被吃掉；设置打开时 Esc/P 只关设置。debugHud 只留数字键 / `[` `]` / O 和描边同步。
+- 新增/修改文件：`src/ui/hud/**`、`src/ui/settings/**`、`src/ui/debugHud.ts`、`src/main.ts`（挂载 HUD 与设置）、本卡、`tasks/README.md`
+- 截图或说明：风格对齐护照（纸色、4px 硬边、Fusion Pixel）。设置持久化沿用 `localStorage` 键 `ai-travel:settings`。本环境没有浏览器工具，未做点击走查；`npm run build` 已通过。
+- 遗留问题 / 需要 Claude 修改的地方：无。`[` `]` 仍可把像素调到 1~10（开发快捷键原范围），面板滑块只写 1~8。
+- 修复：开局护照先挂载时 `ui:modal` 会丢。现改为先挂 HUD/设置再挂护照，并在两者里于挂载后和下一微任务根据 `.passport` / `.settings` 是否隐藏补齐初始 modal，不依赖挂载顺序。护照打开时 P 不打开设置，Esc 只合护照、不切换齿轮。
+- Code Bot headless 验证（截图 /workspace/c-c-2-shots/t06-*.png，在 Code Bot 机器上）：P 开设置、护照打开时 P 无效、Esc 关设置不影响护照、像素/描边/灵敏度写入 localStorage 且刷新后保留、设置打开时 WASD 不动、Esc 露出齿轮且点击可开设置、靠近小樱出现「按 E 交谈」、切图后地名更新，控制台零报错。第一轮发现“开局护照打开时 P 也能打开设置”（挂载顺序导致丢失初始 ui:modal），已修。
+- 请 Claude 看：hud/settings 为补初始状态会在微任务里查询 `.passport` 的 DOM，是对护照类名的隐式耦合；可考虑在 bus 上加查询或让 ui:modal 状态可读。滑块是浏览器原生 range（圆形滑块），不完全像素风。
 
 ## 审阅意见（Claude 填写）

@@ -12,7 +12,7 @@
 | [T03](T03-avatar-model.md) | Q 版角色模型 + 程序动画 | 🎨 美术 | — | done |
 | [T04](T04-outfits.md) | 服装系统 + 当地服装 | 🎨 美术 | T03 | todo |
 | [T05](T05-ui-passport.md) | 护照选卡界面 | 🖥 UI | — | done |
-| [T06](T06-ui-settings-hud.md) | 设置面板 + 正式 HUD | 🖥 UI | — | todo |
+| [T06](T06-ui-settings-hud.md) | 设置面板 + 正式 HUD | 🖥 UI | — | review |
 | [T07](T07-travel-transition.md) | 地图切换过场动画 | 🖥 UI | T05 | todo |
 | [T08](T08-map-giza.md) | 吉萨地图卡完整版 | 🎨 美术 | T01 | todo |
 | [T09](T09-map-paris.md) | 巴黎地图卡（新） | 🎨 美术 | T01 | todo |
