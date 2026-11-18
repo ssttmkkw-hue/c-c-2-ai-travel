@@ -31,6 +31,9 @@ export function sakuraTree(p: Palette, variant = 0): THREE.Group
 | `postbox(p, variant?)` | street.ts | 高约 1.15 | 邮筒，部件 3 |
 | `trafficCone(p, variant?)` | street.ts | 高约 0.7 | 交通锥，部件 2 |
 | `fenceSegment(p, length?, variant?)` | street.ts | 长默认 2，高 1 | 栅栏段，部件 4 |
+| `stoneLantern(p, variant?)` | street.ts | 高 1.7~1.9 | 石灯笼，火窗朝 +Z，部件 5 |
+| `utilityPole(p, variant?)` | street.ts | 高 5.6~6.2 | 电线杆，横担沿 X，部件 4 |
+| `paperLantern(p, variant?)` | street.ts | 高约 0.85 | 纸灯笼，子节点 `sway` 可摇晃，部件 4 |
 | `rock(p, variant?)` | nature.ts | 0.4 / 0.8 / 1.4 | variant 对应小中大，部件 2~3 |
 | `grassTuft(p, variant?)` | nature.ts | 高约 0.45 | 草丛，部件 3 |
 | `flowerPatch(p, variant?)` | nature.ts | 宽约 0.8 | 花丛，部件 4 |

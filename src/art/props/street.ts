@@ -1,6 +1,6 @@
 /**
- * 街道家具。原点底部中心，正面朝 -Z。
- * 部件数 2~5（≤15）。
+ * 街道家具。原点底部中心，正面朝 +Z。
+ * 部件数 2~6（≤15）。
  */
 import type * as THREE from 'three';
 import type { Palette } from '@/render/palette';
@@ -101,4 +101,59 @@ export function fenceSegment(p: Palette, length = 2, variant = 0): THREE.Group {
     kit.box(len, 0.08, 0.06, rail, { y: 0.78 }),
     kit.box(len, 0.08, 0.06, rail, { y: 0.38 }),
   );
+}
+
+/**
+ * 石灯笼。高约 1.7~1.9m。部件 5。火窗朝 +Z。神社参道、庭院。
+ */
+export function stoneLantern(p: Palette, variant = 0): THREE.Group {
+  const i = v(variant);
+  const glow = pick(p.accent, 2);
+  const postH = 0.58 + i * 0.1;
+  const chamberY = 0.28 + postH + 0.18;
+  return kit.group(
+    kit.box(0.5, 0.22, 0.5, COLORS.stoneDark, { y: 0.11 }),
+    kit.cylinder(0.09, 0.13, postH, COLORS.stone, { y: 0.22 + postH / 2, segments: 6 }),
+    kit.box(0.4, 0.36, 0.4, COLORS.stoneLight, { y: chamberY }),
+    kit.box(0.16, 0.14, 0.04, glow, {
+      y: chamberY, z: 0.21, emissive: glow, emissiveIntensity: 0.7, outline: false,
+    }),
+    kit.cone(0.38, 0.32, 4, COLORS.stone, { y: chamberY + 0.32, ry: Math.PI / 4 }),
+  );
+}
+
+/**
+ * 电线杆。高约 5.6~6.2m。部件 4。横担沿 X，挂线高度约 5.2m（variant 0）。
+ * 适合城市街道。
+ */
+export function utilityPole(p: Palette, variant = 0): THREE.Group {
+  const i = v(variant);
+  const h = 5.6 + i * 0.3;
+  return kit.group(
+    kit.cylinder(0.09, 0.13, h, COLORS.woodDark, { y: h / 2, segments: 6 }),
+    kit.box(1.35, 0.08, 0.1, COLORS.wood, { y: h - 0.4 }),
+    kit.box(0.08, 0.08, 0.55, COLORS.wood, { y: h - 0.72 }),
+    kit.box(0.32, 0.36, 0.26, pick(p.primary, i + 2), { y: h * 0.55 }),
+  );
+}
+
+/**
+ * 纸灯笼（居酒屋）。含挂绳总高约 0.85m。部件 4。
+ * 子节点名为 `sway`，绕其原点（挂钩）摇晃；整组原点在灯笼底部。
+ */
+export function paperLantern(p: Palette, variant = 0): THREE.Group {
+  const i = v(variant);
+  const color = pick(p.accent, i === 1 ? 3 : 0);
+  const sway = kit.group(
+    kit.cylinder(0.012, 0.012, 0.22, COLORS.woodDark, { y: -0.1, segments: 4, outline: false, shadow: false }),
+    kit.cylinder(0.14, 0.18, 0.08, color, { y: -0.24, segments: 6 }),
+    kit.cylinder(0.18, 0.18, 0.26, color, {
+      y: -0.4, segments: 8, emissive: color, emissiveIntensity: 0.65,
+    }),
+    kit.cylinder(0.14, 0.18, 0.08, color, { y: -0.56, segments: 6 }),
+  );
+  sway.name = 'sway';
+  sway.position.y = 0.82;
+  const root = kit.group(sway);
+  return root;
 }
