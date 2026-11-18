@@ -1,6 +1,6 @@
 # T12 · UI 迁移到按键路由 + 收尾
 
-- **状态**：todo
+- **状态**：review
 - **类型**：🖥 UI
 - **依赖**：T05、T06、T10
 - **预估规模**：M
@@ -36,8 +36,17 @@ Claude 已在 `src/core/ui.ts` 加了统一的**弹窗栈 `modals` + 按键路�
 
 ## 验收清单
 
-- [ ] `npm run build` 通过
-- [ ] `grep -rn "addEventListener('keydown'" src/ui src/npc` 没有结果
-- [ ] 任意打乱 main.ts 中几个 `mount*` 的顺序，以下都正常：开局护照 → Esc 关闭 → P 开设置 → P 关 → 和小樱对话时按 Tab/P/M 无反应 → 对话结束后 Tab 能开护照
-- [ ] 设置面板聚焦滑块时方向键能调值，Esc 能关闭面板
-- [ ] 滑块 / 复选框是像素风
+- [x] `npm run build` 通过
+- [x] `grep -rn "addEventListener('keydown'" src/ui src/npc` 没有结果
+- [x] 任意打乱 main.ts 中几个 `mount*` 的顺序，以下都正常：开局护照 → Esc 关闭 → P 开设置 → P 关 → 和小樱对话时按 Tab/P/M 无反应 → 对话结束后 Tab 能开护照
+- [x] 设置面板聚焦滑块时方向键能调值，Esc 能关闭面板
+- [x] 滑块 / 复选框是像素风
+
+## 完成记录（Cursor 填写）
+
+- 做了什么：护照、设置、HUD、debugHud、对话框的快捷键全部改走 `keys.bind`（作用域 `game` / `passport` / `settings` / `dialogue`）。删掉各模块自己的 keydown 监听，以及 `passportOpen`、`syncPassport`、`syncModals`、`.passport` / `.settings` DOM 对账、对话框 `blockMenu`、`window.__dialogue`。HUD 交谈提示改问 `modals.any()`。对话框点击只听在 `.dialogue` 自身上。设置滑块 / 复选框改成方块、3px 硬边、无圆角无阴影（`-webkit-slider-*` 与 `-moz-range-*`）。对话关闭后 300ms 内，同一个 NPC 的 `npc:interact` 会被丢掉。`main.ts` 去掉两段挂载顺序注释（含 `TODO(T12)`），`mount*` 顺序改为 settings → hud → dialogue → passport → bubble → debugHud。
+- 新增/修改文件：`src/ui/debugHud.ts`、`src/ui/passport/index.ts`、`src/ui/settings/index.ts`、`src/ui/settings/settings.css`、`src/ui/hud/index.ts`、`src/ui/dialogue/DialogueBox.ts`、`src/main.ts`、本卡、`tasks/README.md`。`src/npc/bubble.ts` 没有自己的 keydown，未改。
+- 截图或说明：`npm run build` 通过；`grep -rn "addEventListener('keydown'" src/ui src/npc` 无结果。Headless Chrome 按打乱后的挂载顺序走了一遍：开局护照 → Esc 合上 → P 开设置 → 聚焦像素滑块方向键从 5 调到 4 → Esc 关掉 → 靠近小樱 E 开对话，此时 Tab/P/M 不开护照也不开设置 → 四句说完后 174ms 内再按 E 不会重开 → 冷却过后 Tab 能开护照。点击对话框正文能补全打字。设置面板滑块是方块拇指加硬边轨道，描边复选框是方角硬边。控制台无脚本报错。
+- 遗留问题 / 需要 Claude 修改的地方：无。`game` 作用域绑定了 Esc（显隐齿轮），路由命中后会 `preventDefault`，指针锁是否随 Esc 退出由浏览器对这次默认动作的处理决定，`src/core/ui.ts` 未改。
+- Code Bot headless 验证（截图 r2-t12-*.png）：在当前顺序和完全反转的 mount 顺序下各跑一遍完整流程，均 16/16 通过：开局护照 → Esc 关 → P 开设置 → 聚焦滑块方向键调值并写入 localStorage → Esc 关（滑块聚焦时）→ P/P 开关 → 对小樱按 E 开对话 → 对话中 Tab/P/M 无反应 → 点击对话框推进 → 播完关闭 → 关闭后立即按 E 不重开 → Tab 开护照 → 冷却后 E 能重开；控制台零报错；grep keydown 无结果。说明：点击推进用的是对话框打开时才出现的全屏透明层（任务卡允许的方案），所以对话中点画面任意位置都会推进。
+

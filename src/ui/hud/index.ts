@@ -2,6 +2,7 @@
  * 正式 HUD：地点、操作提示、交谈提示。不挡鼠标。
  */
 import { bus } from '@/core/events';
+import { keys, modals } from '@/core/ui';
 import './hud.css';
 
 const HINT_MS = 4500;
@@ -20,11 +21,10 @@ export function mountHud(root: HTMLElement): void {
   const hints = wrap.querySelector('[data-hints]') as HTMLElement;
   const talk = wrap.querySelector('[data-talk]') as HTMLElement;
   let hintTimer = 0;
-  const modals = new Set<string>();
   let nearby: string | null = null;
 
   function syncTalk(): void {
-    talk.hidden = !nearby || modals.size > 0;
+    talk.hidden = !nearby || modals.any();
   }
 
   function showHints(): void {
@@ -46,44 +46,10 @@ export function mountHud(root: HTMLElement): void {
     syncTalk();
   });
 
-  bus.on('ui:modal', ({ id, open }) => {
-    if (open) modals.add(id);
-    else modals.delete(id);
-    syncTalk();
-  });
-  // 弹层若先挂载，open 事件已经发出。挂载后（含同一轮后续挂载）再对一下 DOM。
-  const syncModals = (): void => {
-    const passport = root.querySelector('.passport');
-    if (passport instanceof HTMLElement) {
-      if (passport.hidden) modals.delete('passport');
-      else modals.add('passport');
-    }
-    const settings = root.querySelector('.settings');
-    if (settings instanceof HTMLElement) {
-      if (settings.hidden) modals.delete('settings');
-      else modals.add('settings');
-    }
-    syncTalk();
-  };
-  syncModals();
-  queueMicrotask(syncModals);
+  bus.on('ui:modal', () => syncTalk());
 
   showHints();
+  syncTalk();
 
-  window.addEventListener(
-    'keydown',
-    (e) => {
-      if (e.code !== 'KeyH' || e.repeat || isTyping(e)) return;
-      if (modals.size > 0) return;
-      e.preventDefault();
-      e.stopPropagation();
-      showHints();
-    },
-    true,
-  );
-}
-
-function isTyping(e: KeyboardEvent): boolean {
-  const t = e.target as HTMLElement | null;
-  return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+  keys.bind('game', 'KeyH', () => showHints());
 }

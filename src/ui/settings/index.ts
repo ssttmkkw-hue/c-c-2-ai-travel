@@ -1,14 +1,11 @@
 /**
- * 设置面板。P 直接打开；Esc 先露出齿轮，再点击打开。
- * 护照打开时不响应 P。面板打开时在捕获阶段截住自己用到的键。
+ * 设置面板。没有弹窗时 P 直接打开，Esc 显示或藏起齿轮；设置在最上层时 P / Esc 关闭。
+ * 滑块方向键不占用路由，聚焦时仍由浏览器自己调值。
  */
 import { bus } from '@/core/events';
 import { getSettings, updateSettings } from '@/core/settings';
+import { keys } from '@/core/ui';
 import './settings.css';
-
-/** 面板打开时截住：开关键、滑块键，以及会写进游戏输入的移动键 */
-const SLIDER = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End']);
-const GAME = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyV']);
 
 export function mountSettings(root: HTMLElement): void {
   const gear = document.createElement('button');
@@ -55,7 +52,6 @@ export function mountSettings(root: HTMLElement): void {
   const sensLabel = overlay.querySelector('[data-sens-label]') as HTMLElement;
 
   let open = false;
-  let passportOpen = false;
 
   function paint(): void {
     const s = getSettings();
@@ -91,66 +87,16 @@ export function mountSettings(root: HTMLElement): void {
   overlay.querySelector('[data-close]')!.addEventListener('click', () => setOpen(false));
 
   bus.on('settings:changed', paint);
-  bus.on('ui:modal', ({ id, open: isOpen }) => {
-    if (id === 'passport') passportOpen = isOpen;
-  });
-  // 护照若先挂载，open 事件已经发出。挂载后（含同一轮后续挂载）再对一下 DOM。
-  const syncPassport = (): void => {
-    const el = root.querySelector('.passport');
-    if (el instanceof HTMLElement) passportOpen = !el.hidden;
-  };
-  syncPassport();
-  queueMicrotask(syncPassport);
 
-  window.addEventListener(
-    'keydown',
-    (e) => {
-      // 护照开着：P 不打开设置；Esc 只交给护照合上，不露出/藏起齿轮。
-      if (passportOpen) {
-        if (e.code === 'KeyP') {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        return;
-      }
-      if (open) {
-        const key = e.key === 'Escape' ? 'Escape' : e.code;
-        if (key === 'Escape' || key === 'KeyP') {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!e.repeat) setOpen(false);
-          return;
-        }
-        if (SLIDER.has(key) && isTyping(e)) return;
-        if (SLIDER.has(key) || GAME.has(key)) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        return;
-      }
-      if (e.repeat) return;
-      if (e.code === 'KeyP') {
-        e.preventDefault();
-        e.stopPropagation();
-        setOpen(true);
-        return;
-      }
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        gear.hidden = !gear.hidden;
-      }
-    },
-    true,
-  );
+  keys.bind('game', 'KeyP', () => setOpen(true));
+  keys.bind('game', 'Escape', () => {
+    gear.hidden = !gear.hidden;
+  });
+  keys.bind('settings', ['KeyP', 'Escape'], () => setOpen(false));
 
   paint();
 }
 
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
-}
-
-function isTyping(e: KeyboardEvent): boolean {
-  const t = e.target as HTMLElement | null;
-  return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
 }

@@ -18,7 +18,7 @@
 | [T09](T09-map-paris.md) | 巴黎地图卡（新） | 🎨 美术 | T01 | todo |
 | [T10](T10-npc-dialogue.md) | NPC 对话框 | 🖥 UI | — | done |
 | [T11](T11-ambient-fx.md) | 环境特效（花瓣/沙尘/云） | ✨ 特效 | — | todo |
-| [T12](T12-ui-key-routing.md) | UI 迁移到按键路由 + 收尾 | 🖥 UI | T05, T06, T10 | todo |
+| [T12](T12-ui-key-routing.md) | UI 迁移到按键路由 + 收尾 | 🖥 UI | T05, T06, T10 | review |
 
 建议顺序（当前）：T12 + T04 可并行 → T07 / T08 / T09 / T11
 

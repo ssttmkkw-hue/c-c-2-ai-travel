@@ -1,8 +1,9 @@
 /**
  * 像素风对话框。NPC 台词和之后的 AI 导游都走这五个方法。
- * 打开时在捕获阶段截住推进键；并尽量拦住 P / Tab / M（见 mount 注释）。
+ * 推进键走 dialogue 作用域；点击只落在对话框自身上。
  */
 import { bus } from '@/core/events';
+import { keys } from '@/core/ui';
 import { MAP_CARDS } from '@/world/registry';
 import type { MapCardDef } from '@/world/MapCard';
 import type { NpcDef } from '@/npc/types';
@@ -52,8 +53,19 @@ export class DialogueBox {
     this.hintEl = this.root.querySelector('[data-hint]') as HTMLElement;
     this.optionsEl = this.root.querySelector('[data-options]') as HTMLElement;
 
-    window.addEventListener('keydown', (e) => this.onKey(e), true);
-    window.addEventListener('click', (e) => this.onClick(e), true);
+    keys.bind('dialogue', ['KeyE', 'Space', 'Enter'], (e) => {
+      if (!this.opened || e.repeat) return;
+      this.advance();
+    });
+    keys.bind('dialogue', ['ArrowLeft', 'ArrowUp'], (e) => {
+      if (!this.opened || !this.chooseResolve || e.repeat) return;
+      this.moveChoice(-1);
+    });
+    keys.bind('dialogue', ['ArrowRight', 'ArrowDown'], (e) => {
+      if (!this.opened || !this.chooseResolve || e.repeat) return;
+      this.moveChoice(1);
+    });
+    this.root.addEventListener('click', (e) => this.onClick(e));
   }
 
   open(speaker: string): void {
@@ -248,65 +260,45 @@ export class DialogueBox {
     });
   }
 
-  private onKey(e: KeyboardEvent): void {
-    if (!this.opened) return;
-    const advance = e.code === 'KeyE' || e.code === 'Space';
-    const blockMenu = e.code === 'KeyP' || e.code === 'Tab' || e.code === 'KeyM' || e.key === 'Escape';
-    if (!advance && !blockMenu && !this.chooseResolve) return;
-    if (this.chooseResolve && (e.key === 'ArrowLeft' || e.key === 'ArrowUp')) {
-      swallow(e);
-      if (!e.repeat) this.moveChoice(-1);
-      return;
-    }
-    if (this.chooseResolve && (e.key === 'ArrowRight' || e.key === 'ArrowDown')) {
-      swallow(e);
-      if (!e.repeat) this.moveChoice(1);
-      return;
-    }
-    if (this.chooseResolve && e.key === 'Enter') {
-      swallow(e);
-      if (!e.repeat) this.pick(this.choice);
-      return;
-    }
-    if (advance || blockMenu) swallow(e);
-    if (advance && !e.repeat) this.advance();
-  }
-
   private onClick(e: MouseEvent): void {
     if (!this.opened) return;
     const target = e.target as HTMLElement | null;
     if (target?.closest('[data-choice]')) return;
-    swallow(e);
     this.advance();
   }
 }
 
-function swallow(e: Event): void {
-  e.preventDefault();
-  e.stopImmediatePropagation();
-}
+/** 刚合上后，同一 NPC 在这段时间内按 E 不会立刻再打开 */
+const REOPEN_MS = 300;
 
 /** 挂上对话框，并接 npc:interact 播放当前地图卡里的固定台词 */
 export function mountDialogue(root: HTMLElement): DialogueBox {
   const box = new DialogueBox(root);
   let card: MapCardDef | null = null;
   let playing = false;
+  let lastNpcId: string | null = null;
+  let reopenAt = 0;
 
   bus.on('map:loaded', ({ card: next }) => {
     card = next;
   });
 
+  bus.on('ui:modal', ({ id, open }) => {
+    if (id === 'dialogue' && !open) reopenAt = performance.now() + REOPEN_MS;
+  });
+
   bus.on('npc:interact', ({ npcId }) => {
     if (playing || box.isOpen) return;
+    if (npcId === lastNpcId && performance.now() < reopenAt) return;
     const npc = findNpc(card, npcId);
     if (!npc || npc.lines.length === 0) return;
+    lastNpcId = npcId;
     playing = true;
     void playLines(box, npc).finally(() => {
       playing = false;
     });
   });
 
-  (window as unknown as { __dialogue?: DialogueBox }).__dialogue = box;
   return box;
 }
 

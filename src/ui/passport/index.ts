@@ -1,8 +1,9 @@
 /**
  * 护照选卡。只通过 bus 和游戏通信。
- * Tab / M 开关；打开时方向键、Enter、Esc 在捕获阶段截住，不进游戏输入。
+ * 没有弹窗时 Tab / M 打开；护照在最上层时 Esc / Tab / M 合上，方向键选择，Enter 出发。
  */
 import { bus } from '@/core/events';
+import { keys } from '@/core/ui';
 import { MAP_CARDS } from '@/world/registry';
 import type { MapCardDef } from '@/world/MapCard';
 import './passport.css';
@@ -102,6 +103,14 @@ export function mountPassport(root: HTMLElement): void {
 
   overlay.querySelector('[data-close]')!.addEventListener('click', () => setOpen(false));
 
+  keys.bind('game', ['Tab', 'KeyM'], () => setOpen(true));
+  keys.bind('passport', ['Escape', 'Tab', 'KeyM'], () => setOpen(false));
+  keys.bind('passport', 'ArrowLeft', () => move(-1, 0), { repeat: true });
+  keys.bind('passport', 'ArrowRight', () => move(1, 0), { repeat: true });
+  keys.bind('passport', 'ArrowUp', () => move(0, -1), { repeat: true });
+  keys.bind('passport', 'ArrowDown', () => move(0, 1), { repeat: true });
+  keys.bind('passport', 'Enter', () => depart(selected));
+
   bus.on('map:loaded', ({ card }) => {
     currentId = card.id;
     buttons.forEach((btn) => {
@@ -121,49 +130,7 @@ export function mountPassport(root: HTMLElement): void {
     });
   });
 
-  window.addEventListener(
-    'keydown',
-    (e) => {
-      const toggle = e.code === 'Tab' || e.code === 'KeyM';
-      if (!open) {
-        if (!toggle) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setOpen(true);
-        return;
-      }
-      if (toggle || e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        setOpen(false);
-        return;
-      }
-      if (e.key === 'ArrowLeft') {
-        swallow(e);
-        move(-1, 0);
-      } else if (e.key === 'ArrowRight') {
-        swallow(e);
-        move(1, 0);
-      } else if (e.key === 'ArrowUp') {
-        swallow(e);
-        move(0, -1);
-      } else if (e.key === 'ArrowDown') {
-        swallow(e);
-        move(0, 1);
-      } else if (e.key === 'Enter') {
-        swallow(e);
-        depart(selected);
-      }
-    },
-    true,
-  );
-
   setOpen(true);
-}
-
-function swallow(e: KeyboardEvent): void {
-  e.preventDefault();
-  e.stopPropagation();
 }
 
 function paintCard(btn: HTMLButtonElement, card: MapCardDef): void {
