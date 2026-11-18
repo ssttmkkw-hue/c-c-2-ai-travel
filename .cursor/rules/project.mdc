@@ -1,0 +1,16 @@
+---
+description: AI Travel 项目协作规则
+alwaysApply: true
+---
+
+本项目由 Claude（架构/审阅）和 Cursor（实现）协作。开始任何工作前：
+
+1. 读 `AGENTS.md`：分工、硬性规则、🔒 Claude 保留区（禁止修改）
+2. 读 `tasks/README.md`，按任务卡工作，只改任务卡允许的文件
+3. 美术相关先读 `docs/ART_GUIDE.md`；地图卡先读 `docs/MAP_CARD_SPEC.md`
+4. 完成后 `npm run build` 必须通过，在任务卡里写完成记录，状态改为 `review`
+
+核心约定速记：
+- 模型只用 `@/art/kit` 拼（box/cylinder/cone/ball/group/place），颜色只用调色板
+- 系统通信只用 `bus`（`@/core/events`）
+- 单位米，角色身高约 1.2m，物体原点在底部中心

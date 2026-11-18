@@ -1,0 +1,18 @@
+/* 全局基础样式。UI 组件样式放在 src/ui/<组件>/ 下各自的 css 中（见任务卡 T05/T06） */
+:root {
+  --ui-bg: rgba(30, 20, 40, 0.78);
+  --ui-fg: #fff8f0;
+  --ui-accent: #ff4f8b;
+  --ui-font: 'Zpix', 'Press Start 2P', 'PingFang SC', 'Microsoft YaHei', monospace;
+}
+html, body { margin: 0; height: 100%; overflow: hidden; background: #111; }
+#app { position: fixed; inset: 0; }
+.game-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+#ui { position: fixed; inset: 0; pointer-events: none; font-family: var(--ui-font); color: var(--ui-fg); }
+#ui > * { pointer-events: auto; }
