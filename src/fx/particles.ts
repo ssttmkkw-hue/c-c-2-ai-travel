@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import type { MapBuildContext } from '@/world/MapCard';
 import { getSettings } from '@/core/settings';
 import { markDynamic } from '@/render/batch';
+import { DETAIL_SCALE } from '@/render/quality';
 import { toonMaterial } from '@/render/toon';
 
 export type ParticleShape = 'petal' | 'dust' | 'leaf' | 'snow';
@@ -40,8 +41,6 @@ const SHAPES: Record<ParticleShape, { speed: number; sway: number; wind: [number
 };
 
 const MAX_COUNT = 400;
-/** 各画质档位显示多少比例的粒子 */
-const QUALITY_FACTOR = { low: 0, medium: 0.5, high: 1 } as const;
 
 /** 离相机多近开始缩小 / 完全消失（米）：[消失, 开始缩小] */
 const NEAR_FADE: [number, number] = [0.8, 1.6];
@@ -83,7 +82,7 @@ export function addFallingParticles(ctx: MapBuildContext, o: FallingParticleOpts
   mesh.onBeforeRender = (_r, _s, camera) => void camPos.setFromMatrixPosition(camera.matrixWorld);
 
   ctx.onUpdate((_dt, t) => {
-    const shown = Math.round(count * QUALITY_FACTOR[getSettings().quality]);
+    const shown = Math.round(count * DETAIL_SCALE[getSettings().quality]);
     mesh.visible = shown > 0;
     mesh.count = shown;
     if (!shown) return;

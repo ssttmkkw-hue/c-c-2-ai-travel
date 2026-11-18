@@ -1,9 +1,11 @@
 /**
  * 引擎：渲染器、主循环、更新回调。
  *
- * 渲染管线（两步）：
- *   1. 场景 → 离屏 RenderTarget（内部分辨率，线性色彩空间；高清模式带 MSAA）
- *   2. RenderTarget → 画布（一个全屏三角形，输出时转 sRGB）
+ * 渲染管线（两步，没有第三遍）：
+ *   1. 场景 → 离屏 RenderTarget（内部分辨率，线性色彩空间）
+ *   2. RenderTarget → 画布（一个全屏三角形：曝光 / 高光压缩 / 饱和度 / sRGB，同一次完成）
+ * 像素风用 8 位缓冲、不开 MSAA（最近邻放大用不上抗锯齿，半浮点在软件渲染上带宽翻倍）。
+ * 高清用半浮点；只有高画质才开 MSAA。
  *
  * 画布的后备缓冲始终等于它在屏幕上占的**物理像素**（CSS 尺寸 × devicePixelRatio），浏览器不再做任何拉伸。
  * - 像素风：内部分辨率 = 物理像素 / 整数倍 scale，第 2 步用最近邻采样放大，每个像素块严格是 scale×scale。
@@ -34,7 +36,10 @@ export class Engine {
 
   private currentView: RenderView | null = null;
   private target: THREE.WebGLRenderTarget | null = null;
-  private readonly targetType: THREE.TextureDataType;
+  /** 设备能否写半浮点颜色。像素风不用，高清才用 */
+  private readonly floatOk: boolean;
+  /** 上一帧两步各自的耗时（毫秒），给画质报告 / 调试用 */
+  readonly frameMs = { scene: 0, blit: 0 };
   private readonly blitMaterial: THREE.ShaderMaterial;
   private readonly blitScene = new THREE.Scene();
   private readonly blitCamera = new THREE.Camera();
@@ -52,10 +57,8 @@ export class Engine {
     canvas.classList.add('game-canvas');
     container.appendChild(canvas);
 
-    // 内部缓冲存线性颜色，8 位会在暗部出色带，所以优先用半浮点
     const ext = this.renderer.extensions;
-    const floatOk = ext.has('EXT_color_buffer_float') || ext.has('EXT_color_buffer_half_float');
-    this.targetType = floatOk ? THREE.HalfFloatType : THREE.UnsignedByteType;
+    this.floatOk = ext.has('EXT_color_buffer_float') || ext.has('EXT_color_buffer_half_float');
 
     this.blitMaterial = new THREE.ShaderMaterial({
       uniforms: { tScene: { value: null }, exposure: { value: 1 }, saturation: { value: 1 } },
@@ -109,6 +112,11 @@ export class Engine {
     return this.currentView!;
   }
 
+  /** 离屏缓冲：'ubyte' 或 'half-float'。像素风固定 ubyte */
+  get colorBuffer(): 'ubyte' | 'half-float' {
+    return this.target?.texture.type === THREE.HalfFloatType ? 'half-float' : 'ubyte';
+  }
+
   /** 整体调色：曝光与饱和度（在第 2 步的着色器里做，连同高光压缩）。由 World 按地图卡的调色板设置 */
   setGrade(exposure: number, saturation: number): void {
     this.blitMaterial.uniforms.exposure.value = exposure;
@@ -143,13 +151,15 @@ export class Engine {
     r.setSize(view.canvasWidth, view.canvasHeight, false); // CSS 尺寸由样式表控制（100%）
 
     const filter = view.mode === 'pixel' || view.scale === 1 ? THREE.NearestFilter : THREE.LinearFilter;
-    if (this.target && this.target.samples !== view.samples) {
+    // 像素风：8 位、无 MSAA。高光压缩在 >1 的亮度上才会和半浮点有差别，卡通色阶很少用到那一段。
+    const type = view.mode === 'hd' && this.floatOk ? THREE.HalfFloatType : THREE.UnsignedByteType;
+    if (this.target && (this.target.samples !== view.samples || this.target.texture.type !== type)) {
       this.target.dispose();
       this.target = null;
     }
     if (!this.target) {
       this.target = new THREE.WebGLRenderTarget(view.width, view.height, {
-        type: this.targetType,
+        type,
         samples: view.samples,
         depthBuffer: true,
         stencilBuffer: false,
@@ -199,13 +209,17 @@ export class Engine {
   private renderFrame(): void {
     const r = this.renderer;
     // renderer.info.render 的口径和以前一致：主场景这一遍的 draw call（three 在阴影遍之后清零），
-    // 第 2 步不清零，只是累加 1 次 draw call
+    // 第 2 步不清零，只是累加 1 次 draw call。调色就在这一次 blit 里，不再单独开 pass。
     r.info.autoReset = true;
+    const t0 = performance.now();
     r.setRenderTarget(this.target);
     r.render(this.scene, this.camera);
+    const t1 = performance.now();
     r.info.autoReset = false;
     r.setRenderTarget(null);
     r.render(this.blitScene, this.blitCamera);
+    this.frameMs.scene = t1 - t0;
+    this.frameMs.blit = performance.now() - t1;
   }
 
   /** 监听画布容器的尺寸。优先用 device-pixel-content-box 拿到精确的物理像素数（缩放比例是 125% / 150% 时也不差 1 像素） */

@@ -4,27 +4,53 @@
  * 两种画面风格：
  * - 'pixel' 像素风：场景按「虚拟分辨率」渲染，再用**整数倍**最近邻放大到屏幕物理像素。
  *   虚拟分辨率由「目标短边」决定，和屏幕 DPR 无关 —— 1080p、4K、Retina 上看到的像素颗粒观感一致。
- * - 'hd' 高清：按屏幕物理像素渲染（倍率受画质档位限制）+ MSAA 抗锯齿。
+ * - 'hd' 高清：按屏幕物理像素渲染（倍率受画质档位限制）。只有高画质才开 MSAA。
  *
- * Engine 用 computeView() 得到 RenderView；World 用 QUALITY 配置阴影。
+ * Engine 用 computeView() 得到 RenderView；World 用 shadowConfig() 配置阴影。
  */
 import type { PixelDensity, Quality, RenderMode } from '@/core/settings';
 
 export interface QualityPreset {
-  /** 太阳阴影贴图边长 */
-  shadowMapSize: number;
-  /** 阴影采样是否做 PCF 过滤（见 shadowConfig） */
-  shadowFiltered: boolean;
   /** 高清模式：渲染倍率上限（相对 CSS 像素，实际 = min(devicePixelRatio, 上限)） */
   hdMaxPixelRatio: number;
-  /** 高清模式：MSAA 采样数（0 = 关） */
+  /**
+   * 高清模式的 MSAA 采样数（0 = 关）。
+   * 只在「高清 + 高画质」打开：像素风是低分辨率最近邻放大，MSAA 几乎看不出来，还会多一次全屏 resolve。
+   */
   hdSamples: number;
 }
 
 export const QUALITY: Record<Quality, QualityPreset> = {
-  low: { shadowMapSize: 1024, shadowFiltered: false, hdMaxPixelRatio: 1, hdSamples: 0 },
-  medium: { shadowMapSize: 2048, shadowFiltered: true, hdMaxPixelRatio: 1.5, hdSamples: 2 },
-  high: { shadowMapSize: 4096, shadowFiltered: true, hdMaxPixelRatio: 2, hdSamples: 4 },
+  low: { hdMaxPixelRatio: 1, hdSamples: 0 },
+  medium: { hdMaxPixelRatio: 1.5, hdSamples: 0 },
+  high: { hdMaxPixelRatio: 2, hdSamples: 4 },
+};
+
+/**
+ * 地面细节 / 飘落粒子的数量系数。
+ * 低档关掉（这些小东西主要是填充率），中档一半，高档全开。
+ */
+export const DETAIL_SCALE: Record<Quality, number> = { low: 0, medium: 0.5, high: 1 };
+
+interface ShadowLevel {
+  mapSize: number;
+  filtered: boolean;
+}
+
+/**
+ * 阴影贴图边长。
+ * 像素风内部分辨率最多约 960×540，4096 的阴影图填不满、又很贵（软件渲染下阴影曾占约四成帧时间）。
+ * 高清·高仍用 4096：那一档是显式选择，近处要更细的柔影。
+ */
+const PIXEL_SHADOW: Record<Quality, ShadowLevel> = {
+  low: { mapSize: 1024, filtered: false },
+  medium: { mapSize: 1024, filtered: true },
+  high: { mapSize: 2048, filtered: true },
+};
+const HD_SHADOW: Record<Quality, ShadowLevel> = {
+  low: { mapSize: 1024, filtered: false },
+  medium: { mapSize: 2048, filtered: true },
+  high: { mapSize: 4096, filtered: true },
 };
 
 export interface ShadowConfig {
@@ -43,8 +69,8 @@ export interface ShadowConfig {
  * - 低档：两种风格都直接硬采样。
  */
 export function shadowConfig(s: ViewInput): ShadowConfig {
-  const q = QUALITY[s.quality];
-  return { mapSize: q.shadowMapSize, filtered: q.shadowFiltered, hardEdge: s.renderMode === 'pixel' };
+  const q = (s.renderMode === 'pixel' ? PIXEL_SHADOW : HD_SHADOW)[s.quality];
+  return { mapSize: q.mapSize, filtered: q.filtered, hardEdge: s.renderMode === 'pixel' };
 }
 
 /** 像素风：虚拟分辨率的目标短边（虚拟像素）。实际值会取到最接近的整数倍放大 */

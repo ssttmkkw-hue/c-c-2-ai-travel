@@ -81,7 +81,9 @@ const SHADOW_CALL_PATCHED =
   'toonShadow( getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowIntensity, directionalLightShadow.shadowBias - toonSlopeBias( geometryNormal, directLight.direction ), directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) )';
 const lightsChunk = THREE.ShaderChunk.lights_fragment_begin;
 const lightsChunkPatched = lightsChunk.replace(SHADOW_CALL, SHADOW_CALL_PATCHED);
-if (import.meta.env.DEV && lightsChunkPatched === lightsChunk) {
+/** 阴影着色器补丁是否套上了 three r170 的那一行。没套上时背光面会重新出现条纹，而且不会抛错 */
+export const shadowPatchApplied = lightsChunkPatched !== lightsChunk;
+if (!shadowPatchApplied) {
   console.warn('[toon] three 的 lights_fragment_begin 变了，阴影补丁没有生效（升级 three 后需要更新 SHADOW_CALL）');
 }
 

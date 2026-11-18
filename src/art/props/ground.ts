@@ -14,6 +14,8 @@
 import * as THREE from 'three';
 import type { MapBuildContext } from '@/world/MapCard';
 import * as kit from '@/art/kit';
+import { getSettings } from '@/core/settings';
+import { DETAIL_SCALE } from '@/render/quality';
 import { pick } from '@/render/palette';
 
 /** [minX, minZ, maxX, maxZ] */
@@ -80,7 +82,7 @@ export function addGroundDetail(ctx: MapBuildContext, o: GroundDetailOpts): void
       const shade = (rand() < 0.5 ? -1 : 0.8) * contrast * (0.6 + rand() * 0.4);
       items.push({ x, z, y: 0.006, ry, sx, sz, color: new THREE.Color(ctx.palette.ground).offsetHSL(0, 0, shade) });
     }
-    ctx.add(kit.instances(kit.box(1, 0.004, 1, ctx.palette.ground, { outline: false }), items));
+    placeScaled(ctx, kit.instances(kit.box(1, 0.004, 1, ctx.palette.ground, { outline: false }), items));
   }
 
   if (o.tufts) {
@@ -101,7 +103,7 @@ export function addGroundDetail(ctx: MapBuildContext, o: GroundDetailOpts): void
         });
       }
     }
-    ctx.add(kit.instances(kit.cone(0.07, 0.3, 3, ctx.palette.ground, { y: 0.15, outline: false }), items));
+    placeScaled(ctx, kit.instances(kit.cone(0.07, 0.3, 3, ctx.palette.ground, { y: 0.15, outline: false }), items));
   }
 
   if (o.pebbles) {
@@ -119,6 +121,20 @@ export function addGroundDetail(ctx: MapBuildContext, o: GroundDetailOpts): void
         color: pick(o.pebbles.colors, i),
       });
     }
-    ctx.add(kit.instances(kit.ball(0.09, ctx.palette.ground, { outline: false }), items));
+    placeScaled(ctx, kit.instances(kit.ball(0.09, ctx.palette.ground, { outline: false }), items));
   }
+}
+
+/**
+ * 按画质档位少画一些实例。随机数仍然按满数量消耗，换档位不会把剩下的东西挪位置。
+ * 不改 visible：加载时的动态探测会把 visible 变化当成「没标记的动画」。
+ */
+function placeScaled(ctx: MapBuildContext, mesh: THREE.InstancedMesh): void {
+  const full = mesh.count;
+  const apply = () => {
+    mesh.count = Math.round(full * DETAIL_SCALE[getSettings().quality]);
+  };
+  apply();
+  ctx.add(mesh);
+  ctx.onUpdate(apply);
 }
