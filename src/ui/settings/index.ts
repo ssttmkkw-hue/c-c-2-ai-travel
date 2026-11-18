@@ -9,6 +9,7 @@ import { bus } from '@/core/events';
 import { getSettings, updateSettings, type PixelDensity, type Quality, type RenderMode, type Settings } from '@/core/settings';
 import { keys } from '@/core/ui';
 import type { RenderView } from '@/render/quality';
+import { toggleDiag } from '@/ui/diag';
 import './settings.css';
 
 type Choice<T extends string> = { value: T; label: string };
@@ -76,6 +77,7 @@ export function mountSettings(root: HTMLElement): void {
         <span data-sens-label>鼠标灵敏度</span>
         <input data-sens type="range" min="0.3" max="2" step="0.1" />
       </label>
+      <button type="button" class="settings-diag" data-diag>性能信息</button>
       <p class="settings-foot">P / Esc 关闭 · 选项和滑块可用方向键</p>
     </div>
   `;
@@ -152,6 +154,7 @@ export function mountSettings(root: HTMLElement): void {
 
   gear.addEventListener('click', () => setOpen(true));
   overlay.querySelector('[data-close]')!.addEventListener('click', () => setOpen(false));
+  overlay.querySelector('[data-diag]')!.addEventListener('click', () => toggleDiag());
 
   bus.on('settings:changed', paint);
   bus.on('render:view', (v) => {

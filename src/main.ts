@@ -21,14 +21,18 @@ import { mountUiScale } from '@/ui/scale';
 import { mountSettings } from '@/ui/settings';
 import { mountTransition } from '@/ui/transition';
 import { mountWardrobe } from '@/ui/wardrobe';
+import { mountDiag } from '@/ui/diag';
+import { mountPerfProbe } from '@/fx/perfProbe';
 
 const engine = new Engine(document.getElementById('app')!);
+mountPerfProbe(engine);
 const world = new World(engine);
 const player = new Player(engine, world);
 const ui = document.getElementById('ui')!;
 mountUiScale(ui); // 先定好 UI 缩放，后面挂载的界面量尺寸时才准
 mountAutoQuality(ui);
 mountSettings(ui);
+mountDiag(ui);
 mountHud(ui);
 mountTouch(ui, engine.input);
 const dialogue = mountDialogue(ui);

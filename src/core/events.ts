@@ -39,6 +39,8 @@ export interface GameEvents {
   'ui:modal': { id: string; open: boolean };
   /** 时段切换。time 为 null 表示回到这张图的默认调色板 */
   'time:changed': { mapId: string; time: TimeId | null };
+  /** 每秒一次的性能采样（A1），由只读的探针发出。calls / triangles 不含阴影遍 */
+  'perf:sample': { fps: number; worstMs: number; calls: number; triangles: number; gpu: string };
 }
 
 type Handler<T> = (payload: T) => void;

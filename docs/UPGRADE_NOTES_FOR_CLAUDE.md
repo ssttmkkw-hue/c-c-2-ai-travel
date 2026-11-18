@@ -545,3 +545,25 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 高画质主场景 draw call（这个固定镜头，不含阴影遍）：东京 122、吉萨 79、巴黎 64。出生点不固定镜头时巴黎是 117（镜头外的东西被视锥剔掉了）。三角形在低画质更少，是地面细节和粒子关掉了，不是这次的关节合并。复古这一档没有稳定地比精细更快，噪声盖过了 427×267 和 640×400 的差别，所以默认颗粒不动。
 
 `node /workspace/pwtool/fableshots.mjs fable-r2`：`CONSOLE_ERRORS 0`。截图在 `/workspace/c-c-2-shots/fable-r2-*.png`（另有竖屏 `fable-r2-phone-tokyo.png`、`fable-r2-phone-egypt.png`）。出生点、单次 2 秒 rAF：1280 东京 / 吉萨 / 巴黎 21 / 35.5 / 32 fps；1920 21 / 23 / 22；Retina 东京 15。和以前写的 19 / 20 / 17.5 不是同一次、也不是冻结镜头，不能当成这次改动的收益。阴影 2048、缓冲 ubyte、补丁 true。
+
+---
+
+## R2-A1 · 真机诊断面板
+
+### 保留区改动
+
+- `src/core/events.ts`：新增 `'perf:sample'`（fps、worstMs、calls、triangles、gpu）。探针只读，不改设置。
+- `src/main.ts`：挂上 `mountPerfProbe(engine)` 和 `mountDiag(ui)`。正式构建也挂，不走 `__game`。
+
+### 做了什么
+
+- `src/fx/perfProbe.ts`：预分配 240 格的间隔缓冲，丢掉超过 1000ms 的间隔，满 1 秒发一次采样。fps 用间隔中位数，worstMs 用 95 分位。`calls` / `triangles` 读上一帧 `renderer.info.render`（主场景 + 1 次 blit，不含阴影遍）。显卡名只取一次。
+- `src/ui/diag/`：左下角面板，`?diag=1` 直接显示；设置里的「性能信息」调用 `toggleDiag()`。不发 `ui:modal`。按钮以外不接指针（文本框除外，方便复制失败时手动选中）。触屏时面板抬到摇杆上方。
+- 「跑一遍测试」在首次 `map:loaded` 后 6 秒内禁用。三档都用 `updateSettings(..., 'auto')`：像素风高、高清高、像素风低。每档等 1.5 秒再收 4 个采样取中位数。结束时把内存设置整份写回，并把 `localStorage['ai-travel:settings']` 恢复成测试前的原文（没有存档就删掉测试期间写出的那条）。
+
+### 验证
+
+- `npm run typecheck` 通过。`npm run shots` 九张 0.00%，`CONSOLE_ERRORS 0`。
+- 开发模式 `/?diag=1&autoquality=0`：面板可见，帧率文本为正数；跑完测试 JSON 有 3 行（`640x400@2`、`1280x800@1`、`640x400@2`），存档原文不变。不带 `?diag=1` 时面板不可见。
+- `npm run build && npm run preview`：`window.__game` 为 undefined，同一套测试仍可用，控制台 0 错误。
+- 1280×800 出生点、`?autoquality=0`、主场景绘制（不含阴影遍）：东京 119 / 21417，吉萨 79 / 17529，巴黎 117 / 18869。和 R1-6 同一量级（东京少 2 次，是视锥里少看到一点，不是这张面板画进场景）。swiftshader 下像素风高约 25fps，高清高约 6fps，像素风低顶到 60。
