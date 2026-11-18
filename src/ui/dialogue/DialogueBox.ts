@@ -10,6 +10,7 @@ import type { NpcDef } from '@/npc/types';
 import './dialogue.css';
 
 const TYPE_MS = 42;
+const CONTINUE_HINT = 'E / 空格 / 点击继续 · Esc 结束';
 
 interface SayJob {
   text: string;
@@ -44,7 +45,7 @@ export class DialogueBox {
         <p class="dialogue-name" data-name></p>
         <p class="dialogue-text" data-text></p>
         <div class="dialogue-options" data-options></div>
-        <p class="dialogue-hint" data-hint>E / 空格 / 点击继续</p>
+        <p class="dialogue-hint" data-hint>E / 空格 / 点击继续 · Esc 结束</p>
       </div>
     `;
     parent.appendChild(this.root);
@@ -65,6 +66,9 @@ export class DialogueBox {
       if (!this.opened || !this.chooseResolve || e.repeat) return;
       this.moveChoice(1);
     });
+    keys.bind('dialogue', 'Escape', () => {
+      if (this.opened) this.close();
+    });
     this.root.addEventListener('click', (e) => this.onClick(e));
   }
 
@@ -76,7 +80,7 @@ export class DialogueBox {
     window.clearTimeout(this.typeTimer);
     this.textEl.textContent = '';
     this.nameEl.textContent = speaker;
-    this.hintEl.textContent = 'E / 空格 / 点击继续';
+    this.hintEl.textContent = CONTINUE_HINT;
     this.setOpen(true);
   }
 
@@ -231,7 +235,7 @@ export class DialogueBox {
     this.chooseResolve = null;
     this.choice = index;
     this.clearChoices();
-    this.hintEl.textContent = 'E / 空格 / 点击继续';
+    this.hintEl.textContent = CONTINUE_HINT;
     resolve(index);
   }
 

@@ -567,3 +567,23 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 - 开发模式 `/?diag=1&autoquality=0`：面板可见，帧率文本为正数；跑完测试 JSON 有 3 行（`640x400@2`、`1280x800@1`、`640x400@2`），存档原文不变。不带 `?diag=1` 时面板不可见。
 - `npm run build && npm run preview`：`window.__game` 为 undefined，同一套测试仍可用，控制台 0 错误。
 - 1280×800 出生点、`?autoquality=0`、主场景绘制（不含阴影遍）：东京 119 / 21417，吉萨 79 / 17529，巴黎 117 / 18869。和 R1-6 同一量级（东京少 2 次，是视锥里少看到一点，不是这张面板画进场景）。swiftshader 下像素风高约 25fps，高清高约 6fps，像素风低顶到 60。
+
+---
+
+## R2-A3 · 对话可 Esc，卸载时放掉实例缓冲和水面材质
+
+### 保留区改动
+
+- `src/world/World.ts` 的 `unload()`：几何体 `dispose()` 之后，对 `InstancedMesh` 再调 `mesh.dispose()`（摘掉 `instanceMatrix` / `instanceColor`），对单个 `ShaderMaterial` 调 `dispose()`。卡通材质和描边不是 `ShaderMaterial`，天空不在地图根节点下，都不会被放掉。
+
+### 做了什么
+
+- `DialogueBox`：`dialogue` 作用域绑定 Escape，打开时 `close()`（`session` 加一，剩余台词作废）。继续提示改为 `E / 空格 / 点击继续 · Esc 结束`（模板、`open()`，以及选完选项后写回提示的那一处）。
+- 换装：改之前先量了。8 套服装切 20 次，`info.memory.geometries` 从 134 到 137，中间在 135–139 之间来回，不随次数往上爬。合批发生在渲染之前，配件几何体没进渲染器的计数。按提案「改前就不增长则推断不成立」，**没有改 `setOutfit`**。
+
+### 验证
+
+- `npm run typecheck` 通过。`npm run shots` 九张 0.00%，`CONSOLE_ERRORS 0`。
+- 关上开局护照后 `npc:interact` 打开东京导游对话，Escape 关掉，按住 W 约 0.4 秒位移 1.72 米。
+- 东京→吉萨→巴黎 再回东京：场景里不重复的几何体 uuid 都是 154，`programs.length` 回到 9（改前第一轮之后停在 10）。`info.memory.geometries` 只计已经画过的几何体，站着不动时会在 133–137 之间跳，没有一轮比一轮更高。
+- 1280×800 出生点、`?autoquality=0`：东京 119 / 21417，吉萨 79 / 17529，巴黎 117 / 18869。和 A1 相同。

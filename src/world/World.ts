@@ -181,8 +181,14 @@ export class World {
     this.engine.scene.remove(this.root);
     // 材质是全局缓存的（toonMaterial），只释放几何体（描边外壳多数和本体共用几何体，重复 dispose 无害）
     this.root.traverse((o) => {
-      const geo = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
+      const mesh = o as THREE.Mesh;
+      const geo = mesh.geometry as THREE.BufferGeometry | undefined;
       if (geo?.isBufferGeometry) geo.dispose();
+      // 实例化网格的 instanceMatrix / instanceColor 要靠 mesh.dispose() 才从 GPU 属性表里摘掉
+      if ((o as THREE.InstancedMesh).isInstancedMesh) (o as THREE.InstancedMesh).dispose();
+      const mat = mesh.material;
+      // 只放 ShaderMaterial（水面）。卡通材质和描边是全局缓存，不是 ShaderMaterial
+      if (mat && !Array.isArray(mat) && (mat as THREE.ShaderMaterial).isShaderMaterial) mat.dispose();
     });
     this.root = null;
   }
