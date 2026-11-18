@@ -13,7 +13,7 @@
 | [T04](T04-outfits.md) | 服装系统 + 当地服装 | 🎨 美术 | T03 | done |
 | [T05](T05-ui-passport.md) | 护照选卡界面 | 🖥 UI | — | done |
 | [T06](T06-ui-settings-hud.md) | 设置面板 + 正式 HUD | 🖥 UI | — | done |
-| [T07](T07-travel-transition.md) | 地图切换过场动画 | 🖥 UI | T05 | todo |
+| [T07](T07-travel-transition.md) | 地图切换过场动画 | 🖥 UI | T05 | review |
 | [T08](T08-map-giza.md) | 吉萨地图卡完整版 | 🎨 美术 | T01 | todo |
 | [T09](T09-map-paris.md) | 巴黎地图卡（新） | 🎨 美术 | T01 | todo |
 | [T10](T10-npc-dialogue.md) | NPC 对话框 | 🖥 UI | — | done |
