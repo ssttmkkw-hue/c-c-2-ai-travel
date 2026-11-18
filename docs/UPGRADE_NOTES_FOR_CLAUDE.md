@@ -153,3 +153,123 @@
 - UI 里的 emoji（📍 💬 ⚙ ✈）走系统字体，不是点阵风格。
 - 像素风下镜头移动时的「像素爬行」是低分辨率 3D 的固有现象，没有处理（需要相机吸附到像素网格之类的做法）。
 - 我自己在 `/tmp` 下写了几个临时截图脚本，没有进仓库；`/workspace/pwtool` 没有改动。
+
+---
+
+## 第二轮：性能（静态合批）+ 美术观感（天空 / 调色 / 地面细节 / 环境粒子）
+
+提交：`e6cdbac`（合批）、`eacde8d`（光照色彩）、`8ac628e`（细节 + T11 粒子）。
+
+### 1. 静态合批（`src/render/batch.ts`，新文件）
+
+- `batchStatic(root, { nested })`：把子树里不动的 mesh 合并。
+  - 普通卡通材质（不透明、不发光）只有颜色不同 → 颜色烘成**顶点色**，共用一个 `toonMaterial('#ffffff', { vertexColors: true })`，按 castShadow / receiveShadow 分组（最多 4 组）
+  - 发光 / 半透明材质 → 按材质各合一个
+  - 所有描边外壳 → 合成一个（`outlineNormal` 属性按法线矩阵一起烘焙，长度不变，和着色器里的算法等价）
+  - 镜像变换（行列式 < 0）翻转绕向；不保留 uv（卡通材质不用贴图）
+- **动态节点** = 合批边界，用 `kit.dynamic(obj)`（即 `markDynamic`，写 `userData.dynamic`）标记。`nested: true` 时动态节点内部在自己的坐标系里再合一份（摇晃的灯笼、鸟的身体、角色的每个关节）。
+- `probeDynamic(root, updaters)`：**兜底**。用 4 个假时间点试跑地图卡注册的 `onUpdate` 回调，变换 / visible 变了的节点自动标成动态，dev 模式 `console.warn` 提示补标。
+  只能抓「每帧都在动」的动画，所以三张图里已经显式标了（东京灯笼 / 闪烁招牌，吉萨驼头 / 帆 / 波纹，巴黎波纹 / 鸽子 / 翅膀）。
+  ⚠️ 副作用：地图卡的 updater 在加载时会被多调 4 次（时间参数是假的）。现有 updater 都是 `t` 的纯函数，没有影响；以后写「累加 dt」的 updater 会多走 4/60 秒。
+- `BatchHandle.restore()`：撤销合批（换装用）。
+
+| 地图 | mesh 数（改前 → 改后） | draw call（1280×800 出生点视角，改前 → 改后） |
+|---|---|---|
+| 东京 | 942 → 171 | 701 → 123 |
+| 吉萨 | 677 → 93 | 456 → 86 |
+| 巴黎 | 927 → 128 | 734 → 124 |
+
+（改后的数字包含第二轮新加的天空、地面细节、粒子共 5 次 draw call。剩下的大头是角色：每个约 25 次，4 个角色约 100 次。）
+
+**帧时间（要如实说）**：这台机器没有 GPU（swiftshader 软件渲染），而且同时有别的任务在跑（load average 15 / 8 核），fps 读数在 8~28 之间乱跳，**量不出可靠的前后对比**。
+我另外用「同步连续渲染 12 帧 + readPixels，取 8 组里最快的一组」量了一次：
+
+| | 东京 | 吉萨 | 巴黎 |
+|---|---|---|---|
+| 第一轮结束（a16f7fb）· 高 | 41.3 ms | 34.6 ms | 42.7 ms |
+| 第二轮结束 · 高 | 44.5 ms | 43.9 ms | 41.8 ms |
+| 第二轮结束 · 低 | 20.4 ms | 17.9 ms | 20.2 ms |
+
+也就是说：**在软件渲染下，合批没有带来可测的帧时间改善**。软件渲染的瓶颈是像素填充和阴影（关掉阴影 40 → 24 ms；阴影贴图 4096 + PCF Soft 占了约四成），不是 draw call。
+draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，**这一点没有实测**。第二轮加的地面色块有一点重绘开销（软件渲染下约 5 ms，噪声很大，仅供参考）。
+
+### 2. 光照与色彩
+
+- `src/render/sky.ts`（新）：渐变天空穹顶，1 次 draw call，深度压在远平面、最后画（只填没被挡住的像素）。地平线 = 雾色 → `sky` → `skyTop`；朝太阳方向有光晕 + 硬边圆盘；像素风下切成 14 条色带，高清平滑。
+- 调色（在 Engine 第 2 步的着色器里）：曝光 → 高光压缩 → 饱和度 → sRGB。
+  高光压缩 = Khronos PBR Neutral **去掉暗部偏移**的版本：最亮通道 ≤ 0.8 原样输出，以上柔和压到 1 以内。
+  试过 `THREE.NeutralToneMapping` 原版，暗面被压得太重（吉萨围墙、巴黎树冠发黑），所以自己写了；没用 ACES / AgX，因为它们会改调色板的色相和饱和度。
+- 默认饱和度 1.15。三张图：加了 `skyTop`、`sunDirection`（东京太阳低影子长，吉萨高），雾的起止距离各拉远约 10~15%。
+
+### 3. 地面细节 + T11
+
+- `kit.instances(template, items)`：实例化小物件（1 次 draw call）。`addGroundDetail(ctx, opts)`（`src/art/props/ground.ts`）：地面色块（对齐网格的铺装块 / 随机朝向的沙纹，互不重叠）、草丛、石子，带避让矩形。三张图各加了路缘石。
+- T11 轻量版见 `tasks/T11-ambient-fx.md` 的完成记录（云没做）。
+
+### 保留区文件改动明细（第二轮）
+
+#### `src/render/toon.ts`
+- `ToonOptions` 加 `vertexColors?: boolean`（进缓存 key）。
+- 导出 `OUTLINE_ATTR`、`ensureOutlineNormals()`；新增 `outlineShell(geo)`（`addOutline` 改为调用它，行为不变）、`isOutlineShell(obj)`。
+- 影响：纯新增，`addOutline` / `toonMaterial` 原有调用方式不变。
+
+#### `src/art/kit.ts`
+- 新增 `kit.dynamic(obj)`、`kit.instances(template, items, { shadow? })`、类型 `InstanceItem`。文件头注释加了合批约定。
+- 影响：kit 现在 import `@/render/batch`。原有函数没动。
+
+#### `src/world/World.ts`
+- `build()`：`card.build()` 之后、`spawnNpcs` 之前调 `this.batch()`（`probeDynamic` + `batchStatic(root, { nested: true })`）；`ctx.onUpdate` 同时把回调记进本次加载的 `updaters` 数组。
+- `unload()`：释放**所有** mesh 的几何体（以前跳过 `__outline`；合并后的描边有自己的几何体。重复 dispose 无害）。
+- `applyPalette()`：`scene.background` 改为雾色（兜底）；设置天空、太阳方向（`sunDirection`，距离固定 66m）、`engine.setGrade(exposure, saturation)`。
+- 构造函数：把 `Sky` 的 mesh 加进场景，监听 `settings:changed` 切换色带 / 平滑。
+- 影响：**被合并的零件在 build 之后会从场景树里摘掉**（原来的 Group 还在，是空的）。地图卡里拿着零件引用、之后还想改它的，必须 `kit.dynamic`。碰撞盒在 `ctx.add` 时已算好，不受影响；NPC 在合批之后生成，不受影响。
+
+#### `src/core/Engine.ts`
+- 第 2 步着色器加 `exposure` / `saturation` uniform 和高光压缩（见上）；新增 `engine.setGrade(exposure, saturation)`。
+- 影响：`renderer.toneMapping` 仍是 `NoToneMapping`（不走 three 的色调映射）。所有画面都会过这条曲线：亮度 > 0.8 的颜色比以前略暗、略偏白（以前是直接截断在 1）。
+
+#### `src/render/palette.ts`
+- `Palette` 新增可选字段：`skyTop`、`sunDirection`、`exposure`、`saturation`。`sky` / `fog` 的注释更新（fog = 地平线色）。
+- 影响：全是可选字段，老调色板不用改（`gallery`、`_template` 没配，天顶 = sky）。
+
+#### `docs/**`
+- `MAP_CARD_SPEC.md`（kit.dynamic / instances 约定）、`ARCHITECTURE.md`（性能一节）、`ART_GUIDE.md`（调色板新字段）各加了一两行。
+
+### 非保留区改动（第二轮）
+
+| 文件 | 改动 |
+|---|---|
+| `src/render/batch.ts`、`src/render/sky.ts`（新） | 见上 |
+| `src/avatar/chibi.ts` | 关节 `kit.dynamic`，眼睛单独标动态（要眨）；`setOutfit` 里先 `restore()`、改完材质 / 配件后重新 `batchStatic(root, { nested: true })`。每个角色约 50 → 25 次 draw call |
+| `src/art/props/ground.ts`（新）、`props/index.ts` | `addGroundDetail` |
+| `src/fx/particles.ts`（新） | T11 |
+| `src/maps/{tokyo,egypt,paris}/**` | 动态物体标记；palette 新字段；地面细节 / 路缘 / 粒子 |
+
+### 架构上需要你过目的地方（第二轮）
+
+1. **合批的「隐式契约」**：build 之后零件被摘掉这件事对地图卡作者不直观。现在靠 `kit.dynamic` + `probeDynamic` 兜底 + dev 警告 + 文档。如果你更想要显式的，可以去掉 probe，改成 `ctx.add(obj, { dynamic: true })`。
+2. `probeDynamic` 用假时间调 updater（见上面的副作用）。
+3. `kit.ts` → `render/batch.ts` → `render/toon.ts` 的依赖；`fx/particles.ts` 直接 import `core/settings`（读画质档位）和 `render/batch`。
+4. 粒子用 `mesh.onBeforeRender` 读相机位置（ctx 里没有相机）。
+5. 角色合批后，**外部代码在 `rig.head` / `rig.torso` 上挂的东西**照常渲染，但不会并进去；`setOutfit` 之外直接改零件材质的代码不会生效（目前没有这样的代码）。
+6. 天空 mesh（`__sky`）和太阳 / 半球光一样直接挂在 `engine.scene` 上，不在地图 root 里。
+
+### 验证（第二轮）
+
+- `npx tsc --noEmit`、`npm run build` 通过。
+- `node /workspace/pwtool/fableshots.mjs fable-r2`：三张地图都加载，`CONSOLE_ERRORS 0`。截图 `/workspace/c-c-2-shots/fable-r2-*.png`，改前对照 `fable-r2base-*.png`。
+- 合批刚做完、还没动光照时，东京出生点截图和改前逐眼对比一致（描边、阴影、发光招牌都在）。
+- 另外检查过：换装（`outfit:equip` → 浴衣，腰带配件正常）；道具馆（257 mesh → 15）；东京 ↔ 巴黎来回切两轮，`renderer.info.memory.geometries` 稳定（140 / 106），没有泄漏；
+  画质 低 / 中 / 高 下粒子数 0 / 130 / 260；高清模式天空是平滑渐变。dev 控制台没有「未标记动态物体」的警告。
+
+### 已知问题 / 留给后续（第二轮）
+
+- **真实 GPU / 真机上的帧率没有测**；软件渲染下帧时间没有改善（见上）。如果要继续压软件渲染 / 低端机的帧时间，方向是阴影：
+  像素风内部分辨率最多 960×540，「高」档的 4096 阴影贴图大概率是浪费的（可以试像素风封顶 2048）；或者静态阴影缓存。这两个我都没做，因为这里量不出可靠数据。
+- 手机默认档位没改（触屏：标准颗粒 + 中，弱机器低）。「低」= 1024 硬阴影、无粒子，软件渲染下约 20 ms / 帧。我认为合理，但同样没有真机数据。
+- 角色还是每个约 25 次 draw call（每个关节一组）。要再降得做蒙皮（SkinnedMesh），描边着色器也要跟着改。
+- 合并后的静态 mesh 包围球是整张图，不再做视锥剔除（全图静态几何只有 4000~6600 个三角形，不值得分块）。
+- 半透明静态物体（橱窗玻璃）按材质合并后，彼此之间的排序不再按物体远近；目前没看到问题。
+- 地面色块是离地 6mm 的薄片，极远处（> 80m）理论上可能和地面闪烁，那里已经在雾里。
+- 落叶 / 花瓣是小方块，不是真的叶子形状；没有做云（T11 的 `clouds.ts`）。
+- 巴黎清晨配金色落叶是按任务卡写的，季节感上是否合适请美术判断。

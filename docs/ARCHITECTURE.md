@@ -72,4 +72,6 @@ Player ──每帧──▶ 移动/碰撞 → CameraRig → 检测附近 NPC �
   所以斜放的大物体请手动 `ctx.addCollider()` 更贴合的盒子。
 - **材质**：`toonMaterial()` 全局按颜色缓存，卸载地图时不释放材质，只释放几何体。
 - **性能目标**：普通笔记本 60fps。单张地图建议 < 1500 个 mesh（描边算一个）。
-  大量重复物体（草、花瓣）用 `InstancedMesh`，在 `src/fx/` 中实现。
+  大量重复物体（草、花瓣）用 `InstancedMesh`：静态的用 `kit.instances`，飘落粒子在 `src/fx/` 中实现。
+- **静态合批**：`card.build()` 之后 World 调 `batchStatic`（`src/render/batch.ts`），不动的零件按「顶点色」合并，
+  一张图的 draw call 约 100 次（其中角色每个约 25 次）。会动的物体必须用 `kit.dynamic()` 标记。

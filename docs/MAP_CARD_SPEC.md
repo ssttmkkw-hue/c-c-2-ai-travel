@@ -43,6 +43,9 @@ src/maps/<id>/
 - 小装饰（< 1m）不加碰撞
 - 随机布局只用 `ctx.rand()`（可复现），不要用 `Math.random()`
 - 动画（旋转、飘动）用 `ctx.onUpdate((dt, t) => ...)`，卸载时自动清理
+- **会动的物体创建时用 `kit.dynamic(obj)` 标记**（每帧改位置 / 旋转 / 缩放 / visible 的那个节点）。
+  地图建好后不动的零件会被自动合并成几个大 mesh（静态合批，见 `src/render/batch.ts`），没标的物体动画不会生效
+- 大量重复的小东西（草、石子）用 `kit.instances(...)` 或 `addGroundDetail(ctx, ...)`（`@/art/props`）；飘落粒子用 `addFallingParticles`（`@/fx/particles`）
 - 不要往 `engine.scene` 直接加东西，不要持有地图外的引用
 
 ## 当前地图卡

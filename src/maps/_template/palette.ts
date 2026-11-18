@@ -2,6 +2,8 @@ import type { Palette } from '@/render/palette';
 
 export const palette: Palette = {
   sky: '#9fd3e8',
+  // skyTop: '#5fa8e0',            // 可选：天顶色（天空从地平线的 fog 渐变到 sky 再到 skyTop）
+  // sunDirection: [30, 50, 20],   // 可选：指向太阳的方向，y 越小影子越长
   fog: '#9fd3e8',
   fogNear: 40,
   fogFar: 110,
