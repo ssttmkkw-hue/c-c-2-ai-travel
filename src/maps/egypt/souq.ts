@@ -131,7 +131,7 @@ export function buildSouq(ctx: MapBuildContext, add: Add): SouqAnim {
       opacity: 0.42,
     });
     nile.add(wave);
-    waves.push(wave);
+    waves.push(kit.dynamic(wave));
   }
   add(kit.place(nile, -31.2, -2));
   ctx.addCollider(new THREE.Box3(
@@ -172,5 +172,5 @@ export function buildSouq(ctx: MapBuildContext, add: Add): SouqAnim {
   add(kit.place(bush(p, 1), -17.8, -8));
   add(kit.place(bush(p, 2), 24.5, 9.5));
 
-  return { camelHead: camel.head, sail: boat.sail, waves };
+  return { camelHead: kit.dynamic(camel.head), sail: kit.dynamic(boat.sail), waves };
 }

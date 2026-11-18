@@ -79,7 +79,7 @@ export function buildNeonStreet(ctx: MapBuildContext, add: Add): StreetAnim {
     const lantern = paperLantern(p, i);
     add(kit.place(lantern, x, 2.55, 0, 1.5));
     const sway = lantern.getObjectByName('sway');
-    if (sway) sways.push(sway);
+    if (sway) sways.push(kit.dynamic(sway));
   });
 
   const signs: Array<{ x: number; z: number; h: number; color: string; ry?: number; flicker?: boolean }> = [
@@ -94,7 +94,7 @@ export function buildNeonStreet(ctx: MapBuildContext, add: Add): StreetAnim {
   for (const s of signs) {
     const made = verticalSign(s.h, s.color, p.outline);
     add(kit.place(made.root, s.x, s.z, s.ry ?? 0), { collide: true });
-    if (s.flicker) flickers.push(made.glow);
+    if (s.flicker) flickers.push(kit.dynamic(made.glow));
   }
 
   // 街道上空沿电线挂一串纸灯笼，挂钩对齐电线高度，摇晃复用 sway。
@@ -108,7 +108,7 @@ export function buildNeonStreet(ctx: MapBuildContext, add: Add): StreetAnim {
     const lantern = paperLantern(p, i);
     add(kit.place(lantern, x, wireZ, 0, wireY - 0.82));
     const sway = lantern.getObjectByName('sway');
-    if (sway) sways.push(sway);
+    if (sway) sways.push(kit.dynamic(sway));
   });
 
   const poleX = [11.6, 19.0, 27.0, 34.6];

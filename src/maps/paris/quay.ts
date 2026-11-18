@@ -46,8 +46,8 @@ function bookstall(p: MapBuildContext['palette'], variant: number): THREE.Group 
 }
 
 function createPigeon(): { root: THREE.Group; wingL: THREE.Mesh; wingR: THREE.Mesh } {
-  const wingL = kit.box(0.42, 0.07, 0.22, COLORS.stone, { x: -0.28, y: 0.2 });
-  const wingR = kit.box(0.42, 0.07, 0.22, COLORS.stone, { x: 0.28, y: 0.2 });
+  const wingL = kit.dynamic(kit.box(0.42, 0.07, 0.22, COLORS.stone, { x: -0.28, y: 0.2 }));
+  const wingR = kit.dynamic(kit.box(0.42, 0.07, 0.22, COLORS.stone, { x: 0.28, y: 0.2 }));
   const root = kit.group(
     kit.ball(0.18, COLORS.stoneLight, { y: 0.2 }),
     kit.cone(0.05, 0.12, 4, COLORS.stoneDark, { y: 0.2, z: 0.2, rx: Math.PI / 2 }),
@@ -90,7 +90,7 @@ export function buildQuay(ctx: MapBuildContext, add: Add): QuayAnim {
       opacity: 0.45,
     });
     water.add(wave);
-    waves.push(wave);
+    waves.push(kit.dynamic(wave));
   }
   add(kit.place(water, 0, RIVER_Z));
 
@@ -145,14 +145,14 @@ export function buildQuay(ctx: MapBuildContext, add: Add): QuayAnim {
     const phase = i * 2.09;
     const radius = 3.6;
     bird.root.position.set(Math.cos(phase) * radius, 5.5, 7 + Math.sin(phase) * radius * 0.65);
-    add(bird.root);
+    add(kit.dynamic(bird.root));
     flyers.push({ root: bird.root, wingL: bird.wingL, wingR: bird.wingR, phase, radius });
   }
 
   const peckers: Pecker[] = [];
   for (const [x, z, phase] of [[-6.4, -7.6, 0.4], [4.2, -7.2, 1.7], [2.4, 6.5, 2.4]] as Array<[number, number, number]>) {
     const bird = createPigeon();
-    add(kit.place(bird.root, x, z));
+    add(kit.place(kit.dynamic(bird.root), x, z));
     peckers.push({ root: bird.root, phase });
   }
 

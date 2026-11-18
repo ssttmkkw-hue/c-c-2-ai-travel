@@ -10,6 +10,7 @@ import type { Palette } from '@/render/palette';
 import { getSettings } from '@/core/settings';
 import { shadowConfig } from '@/render/quality';
 import { refreshToonMaterials, setOutlineColor, setShadowTuning } from '@/render/toon';
+import { batchStatic, probeDynamic } from '@/render/batch';
 import { getCard } from './registry';
 import { createRng } from './rng';
 import { spawnNpcs } from '@/npc/spawn';
@@ -74,6 +75,7 @@ export class World {
     const root = new THREE.Group();
     root.name = `map:${card.id}`;
     const rand = createRng(card.id);
+    const updaters: ((dt: number, time: number) => void)[] = [];
     const ctx: MapBuildContext = {
       root,
       palette: card.palette,
@@ -86,12 +88,16 @@ export class World {
         return obj;
       },
       addCollider: (box) => this.colliders.push(box.clone()),
-      onUpdate: (fn) => this.disposers.push(this.engine.onUpdate(fn)),
+      onUpdate: (fn) => {
+        updaters.push(fn);
+        this.disposers.push(this.engine.onUpdate(fn));
+      },
       rand,
       getPlayerPosition: () => this.playerPosition,
     };
     this.applyPalette(card.palette);
     await card.build(ctx);
+    this.batch(card, root, updaters);
     this.npcs = spawnNpcs(ctx, card.npcs ?? []);
     this.engine.scene.add(root);
     this.root = root;
@@ -106,11 +112,27 @@ export class World {
     this.npcs = [];
     if (!this.root) return;
     this.engine.scene.remove(this.root);
-    // 材质是全局缓存的（toonMaterial），只释放几何体
+    // 材质是全局缓存的（toonMaterial），只释放几何体（描边外壳多数和本体共用几何体，重复 dispose 无害）
     this.root.traverse((o) => {
-      if ((o as THREE.Mesh).isMesh && o.name !== '__outline') (o as THREE.Mesh).geometry.dispose();
+      const geo = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
+      if (geo?.isBufferGeometry) geo.dispose();
     });
     this.root = null;
+  }
+
+  /**
+   * 静态合批（见 src/render/batch.ts）。在 card.build() 之后、生成 NPC 之前做，所以 NPC 不会被并进去。
+   * 会动的物体靠地图卡用 kit.dynamic() 标记；漏标的用 probeDynamic 兜底，dev 模式下提示补标。
+   */
+  private batch(card: MapCardDef, root: THREE.Group, updaters: ((dt: number, time: number) => void)[]): void {
+    const unmarked = probeDynamic(root, updaters);
+    const stats = batchStatic(root, { nested: true });
+    if (import.meta.env.DEV) {
+      if (unmarked.length) {
+        console.warn(`[World] ${card.id}：有 ${unmarked.length} 个会动的物体没有用 kit.dynamic() 标记（已自动按动态处理）`, unmarked);
+      }
+      console.info(`[World] ${card.id} 静态合批：${stats.merged} 个 mesh → ${stats.batches} 个（${stats.triangles} 三角形）`);
+    }
   }
 
   /** 按画面风格 + 画质档位设置阴影贴图分辨率和过滤方式（见 src/render/quality.ts 的 shadowConfig） */

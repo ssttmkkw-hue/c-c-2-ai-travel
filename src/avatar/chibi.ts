@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import * as kit from '@/art/kit';
 import { COLORS } from '@/art/colors';
 import { toonMaterial } from '@/render/toon';
+import { batchStatic, type BatchHandle } from '@/render/batch';
 import type { AvatarRig } from './types';
 import { getOutfit } from './outfits';
 
@@ -20,8 +21,9 @@ function damp(current: number, target: number, lambda: number, dt: number): numb
   return current + (target - current) * (1 - Math.exp(-lambda * dt));
 }
 
+/** 关节：每帧会转动，所以标成动态。合批时每个关节下面的零件各并成一份（见 render/batch.ts） */
 function joint(x = 0, y = 0, z = 0): THREE.Group {
-  const g = new THREE.Group();
+  const g = kit.dynamic(new THREE.Group());
   g.position.set(x, y, z);
   return g;
 }
@@ -41,8 +43,9 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
   const sideL = kit.box(0.12, 0.3, 0.42, HAIR, { x: -0.24, y: 0.15, z: 0.03 });
   const sideR = kit.box(0.12, 0.3, 0.42, HAIR, { x: 0.24, y: 0.15, z: 0.03 });
   const hairBack = kit.box(0.46, 0.3, 0.14, HAIR, { y: 0.15, z: 0.2 });
-  const eyeL = kit.box(0.09, 0.1, 0.04, EYE, { x: -0.12, y: 0.18, z: -0.22, outline: false });
-  const eyeR = kit.box(0.09, 0.1, 0.04, EYE, { x: 0.12, y: 0.18, z: -0.22, outline: false });
+  // 眼睛要眨（改 scale），不参与合批
+  const eyeL = kit.dynamic(kit.box(0.09, 0.1, 0.04, EYE, { x: -0.12, y: 0.18, z: -0.22, outline: false }));
+  const eyeR = kit.dynamic(kit.box(0.09, 0.1, 0.04, EYE, { x: 0.12, y: 0.18, z: -0.22, outline: false }));
   const hat = kit.box(0.56, 0.07, 0.48, '#ffffff', { y: 0.4 });
   head.add(headMesh, hairCap, bangs, sideL, sideR, hairBack, eyeL, eyeR, hat);
 
@@ -87,6 +90,9 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
 
   const tops: THREE.Mesh[] = [torsoMesh, sleeveL, sleeveR];
   const bottoms: THREE.Mesh[] = [thighL, thighR, shinL, shinR];
+
+  // 每个关节下的零件合成一份（约 50 次 draw call → 约 25 次）。换装时先还原、改完再重新合
+  let batch: BatchHandle | null = null;
 
   let phase = 0;
   let breath = 0;
@@ -150,6 +156,7 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
       eyeR.scale.y = eyeOpen;
     },
     setOutfit(id) {
+      batch?.restore();
       const o = getOutfit(id);
       const topMat = toonMaterial(o.colors.top);
       const bottomMat = toonMaterial(o.colors.bottom);
@@ -174,6 +181,7 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
         acc.userData.accessory = true;
         torso.add(acc);
       }
+      batch = batchStatic(root, { nested: true });
     },
   };
 

@@ -30,6 +30,8 @@ export interface ToonOptions {
   emissiveIntensity?: number;
   transparent?: boolean;
   opacity?: number;
+  /** 颜色乘上几何体的顶点色（color 属性）。静态合批用：见 src/render/batch.ts */
+  vertexColors?: boolean;
 }
 
 export function toonMaterial(color: THREE.ColorRepresentation, opts: ToonOptions = {}): THREE.MeshToonMaterial {
@@ -43,6 +45,7 @@ export function toonMaterial(color: THREE.ColorRepresentation, opts: ToonOptions
       emissiveIntensity: opts.emissiveIntensity ?? 1,
       transparent: opts.transparent ?? false,
       opacity: opts.opacity ?? 1,
+      vertexColors: opts.vertexColors ?? false,
     });
     m.onBeforeCompile = patchToonShadow;
     matCache.set(key, m);
@@ -114,7 +117,8 @@ export function setShadowTuning(slopeBias: number, hardEdge: boolean): void {
 
 // ---------- 描边 ----------
 const OUTLINE_TAG = '__outline';
-const OUTLINE_ATTR = 'outlineNormal';
+/** 描边法线的顶点属性名（合批时要跟着几何体一起烘焙） */
+export const OUTLINE_ATTR = 'outlineNormal';
 /** 尖角处描边法线的最大长度（避免圆锥尖顶之类的地方描边被拉成长刺） */
 const MAX_MITER = 2;
 
@@ -162,14 +166,23 @@ export function setOutlineWidth(px: number, renderHeight: number, fovDeg: number
  * 小物体（< 0.3m）建议不加描边，否则会糊成一团。
  */
 export function addOutline(mesh: THREE.Mesh): THREE.Mesh {
-  ensureOutlineNormals(mesh.geometry);
-  const shell = new THREE.Mesh(mesh.geometry, outlineMaterial);
+  mesh.add(outlineShell(mesh.geometry));
+  return mesh;
+}
+
+/** 用给定几何体造一个描边外壳（不挂到任何节点上）。几何体没有描边法线时会先算好 */
+export function outlineShell(geo: THREE.BufferGeometry): THREE.Mesh {
+  ensureOutlineNormals(geo);
+  const shell = new THREE.Mesh(geo, outlineMaterial);
   shell.name = OUTLINE_TAG;
   shell.castShadow = false;
   shell.receiveShadow = false;
   shell.raycast = () => {};
-  mesh.add(shell);
-  return mesh;
+  return shell;
+}
+
+export function isOutlineShell(obj: THREE.Object3D): boolean {
+  return obj.name === OUTLINE_TAG;
 }
 
 /**
@@ -177,7 +190,7 @@ export function addOutline(mesh: THREE.Mesh): THREE.Mesh {
  * d 满足「对该位置上的每个面法线 n 都有 n·d ≈ 1」（最小二乘），即每个面都被平行外推同样的距离——
  * 立方体的角是 (±1,±1,±1)，细长的盒子四周描边也一样粗（旧的整体缩放做法做不到）。
  */
-function ensureOutlineNormals(geo: THREE.BufferGeometry): void {
+export function ensureOutlineNormals(geo: THREE.BufferGeometry): void {
   if (geo.getAttribute(OUTLINE_ATTR)) return;
   if (!geo.getAttribute('normal')) geo.computeVertexNormals();
   const pos = geo.getAttribute('position');

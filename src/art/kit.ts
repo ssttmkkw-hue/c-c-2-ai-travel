@@ -13,9 +13,12 @@
  * - 道具/建筑的“正面”（门、窗、招牌）朝 **+Z**，这样 `obj.lookAt(目标点)` 就能让正面对着目标。
  *   （角色例外：Avatar 面朝 -Z，由 Player 处理，地图卡不用管）
  * - 颜色一律传入调色板里的颜色。
+ * - 地图加载完后，不动的零件会被自动合并成几个大 mesh（静态合批）。
+ *   **每帧要动 / 要开关 visible 的物体，创建时用 kit.dynamic(obj) 标一下**，否则动画不会生效。
  */
 import * as THREE from 'three';
 import { toonMaterial, addOutline, type ToonOptions } from '@/render/toon';
+import { markDynamic } from '@/render/batch';
 
 export interface PartOpts extends ToonOptions {
   x?: number;
@@ -91,4 +94,12 @@ export function place<T extends THREE.Object3D>(obj: T, x: number, z: number, ry
   obj.position.set(x, y, z);
   obj.rotation.y = ry;
   return obj;
+}
+
+/**
+ * 标记「会动的物体」：之后每帧要改它的位置 / 旋转 / 缩放 / visible（摇晃的灯笼、闪烁的招牌、飞鸟、水波…）。
+ * 它和它的子树不参与静态合批。只标真正在动的那个节点即可（比如只标骆驼的头，身体照常合并）。
+ */
+export function dynamic<T extends THREE.Object3D>(obj: T): T {
+  return markDynamic(obj);
 }
