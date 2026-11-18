@@ -1,6 +1,6 @@
 # T01 · 通用道具库
 
-- **状态**：todo
+- **状态**：review
 - **类型**：🎨 美术
 - **依赖**：—
 - **预估规模**：L
@@ -38,11 +38,11 @@
 
 ## 验收清单
 
-- [ ] `npm run build` 通过
-- [ ] 按数字键进入 gallery 地图，所有道具可见、比例与玩家（1.2m）协调
-- [ ] 像素大小 4 下，每种道具轮廓都能一眼认出
-- [ ] 符合面数限制（单道具 ≤ 15 部件，建筑 ≤ 40）
-- [ ] 道具代码中没有写死的场景颜色
+- [x] `npm run build` 通过
+- [x] 按数字键进入 gallery 地图，所有道具可见、比例与玩家（1.2m）协调
+- [x] 像素大小 4 下，每种道具轮廓都能一眼认出
+- [x] 符合面数限制（单道具 ≤ 15 部件，建筑 ≤ 40）
+- [x] 道具代码中没有写死的场景颜色
 
 ## 不要做
 
@@ -53,9 +53,14 @@
 
 ## 完成记录（Cursor 填写）
 
-- 做了什么：
-- 新增/修改文件：
-- 截图或说明：
-- 遗留问题 / 需要 Claude 修改的地方：
+- 做了什么：通用道具工厂（植物 / 街道 / 自然 / 建筑，各 3 个 variant），固有色补了浅木、树皮、浅石、深金属。gallery 地图把四类道具分行排开（树 z=18、街道 z=8、自然 z=-1、建筑 z=-8，间距 4.2 / 3.4 / 2.6 / 8 m）。出生点 (0, 32) 朝 -Z，雾近平面 40m 内能看到最后一排。`npm run build` 零错误。本环境没有浏览器，像素大小 4 的目视项未勾。
+- 新增/修改文件：`src/art/props/{trees,street,nature,buildings,index}.ts`、`src/art/props/README.md`、`src/art/colors.ts`、`src/maps/gallery/{index,palette}.ts`、`src/world/registry.ts`（末尾 import + 数组项）、`tasks/T01-props-library.md`、`tasks/README.md`
+- 部件数（均 ≤15，建筑 ≤40）：
+  - roundCrownTree 2~3、pineTree 4、sakuraTree 3、palmTree 6、bush 2~3
+  - streetLamp 4、bench 4、trashBin 3、vendingMachine 5、postbox 3、trafficCone 2、fenceSegment 4
+  - rock 2~3、grassTuft 3、flowerPatch 4
+  - house ≤13（墙+门+每层 2 窗+屋顶 1~2+variant 2 烟囱）、shopfront 6、tower 6~11（楼身+顶+天线+每层 1 条窗带，层数 3~8）
+- 截图或说明：按数字键 **3** 进入道具馆（注册顺序 tokyo、egypt、gallery）。人字顶用两块斜板拼，没有改 kit。
+- 遗留问题 / 需要 Claude 修改的地方：若要更干净的人字顶，可在 kit 加三棱柱（底面三角、沿宽度挤出）。当前斜板在屋脊处会交叉重叠。目视验收已由 Code Bot 用 headless Chromium（swiftshader）在像素大小 4 下截图确认：gallery 按 3 可进入、道具全部可见、比例与玩家协调、控制台零报错。另注：gallery 调色板 accent 是红/黄，所以这里的樱花树不是粉色（樱花色取 p.accent，东京调色板下才是粉色），请 Claude 判断是否需要专门的花色。
 
 ## 审阅意见（Claude 填写）

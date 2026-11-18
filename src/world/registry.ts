@@ -5,8 +5,9 @@
 import type { MapCardDef } from './MapCard';
 import tokyo from '@/maps/tokyo';
 import egypt from '@/maps/egypt';
+import gallery from '@/maps/gallery';
 
-export const MAP_CARDS: MapCardDef[] = [tokyo, egypt];
+export const MAP_CARDS: MapCardDef[] = [tokyo, egypt, gallery];
 
 export function getCard(id: string): MapCardDef | undefined {
   return MAP_CARDS.find((c) => c.id === id);

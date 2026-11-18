@@ -7,7 +7,7 @@
 
 | ID | 任务 | 类型 | 依赖 | 状态 |
 |---|---|---|---|---|
-| [T01](T01-props-library.md) | 通用道具库 | 🎨 美术 | — | todo |
+| [T01](T01-props-library.md) | 通用道具库 | 🎨 美术 | — | review |
 | [T02](T02-map-tokyo.md) | 东京地图卡完整版 | 🎨 美术 | T01 | todo |
 | [T03](T03-avatar-model.md) | Q 版角色模型 + 程序动画 | 🎨 美术 | — | review |
 | [T04](T04-outfits.md) | 服装系统 + 当地服装 | 🎨 美术 | T03 | todo |
