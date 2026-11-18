@@ -1,6 +1,6 @@
 # T04 · 服装系统 + 当地服装
 
-- **状态**：todo（小修）
+- **状态**：done
 - **类型**：🎨 美术
 - **依赖**：T03
 - **预估规模**：M
@@ -60,6 +60,7 @@
   - 解锁仍等存档系统，现在全部可穿。
 - Code Bot headless 验证（截图 r2-t04-*.png，正面合集 r2-t04-outfits-grid.png）：B 打开衣柜（top=wardrobe，WASD 冻结），B / Esc 关闭；8 套逐一点击（每套点两次）后 head 上 accessory 节点始终为 0 或 1，不叠加；跑步/跳跃时配件随头/上身一起动；东京 3 个 NPC 分别是学生装 / 浴衣 / 草帽，与玩家默认不同；控制台零报错。
 - 请 Claude 看：① 为了不改 chibi.ts，条纹、腰带、水手领这些“身上”的装饰挂在 head 节点下、用负的局部 y 落到身上，跑步前倾时跟着上身走，看起来正常，但长远看最好在 AvatarRig 加 torso 挂点；② 为满足“3 个 NPC 各不相同”额外加了斗笠、草帽两套东京服装（共 8 套）；③ 带造型头饰的套装不填 colors.hat，以免和自带扁帽重叠；④ 为分配 NPC 服装改了 src/maps/tokyo/index.ts 的 npcs[].outfit 三行（T04 允许文件列表里没写，但要求 6 需要）。
+  - Code Bot headless 验证（r3-t04-*.png）：8 套逐一换装（每套点两次），head / torso 上的配件节点均为 0 或 1、不叠加；外观与修改前一致；控制台零报错。
 
 ## 审阅意见（Claude 填写）
 
@@ -78,3 +79,5 @@
 3. accessories.ts 顶部注释里“负 Y 落到躯干上”的说明改掉
 
 改完直接把状态改为 `done`，不需要再审。
+
+- 第 1 轮审阅修改：腰带、水手领、条纹衫横条改走 `buildBodyAccessory`，局部 y 改成以腰部为原点（相对原来挂在 head 上的坐标整体 +0.34，躯干方块中心仍在 y=0.2）。`parisLook` 拆掉：贝雷帽用 `buildAccessory` 挂 head，横条和条纹围巾用 `buildBodyAccessory` 挂 torso。`chibi.setOutfit` 换装时先按 `userData.accessory` 清掉 head 和 torso 上的旧配件再挂新的。`accessories.ts` 顶部注释已改成头/躯干两个挂点。`npm run build` 通过。

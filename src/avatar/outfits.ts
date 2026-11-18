@@ -1,9 +1,11 @@
 /**
  * 服装注册表。颜色写在这里（收集用的服装色，不是场景调色板）。
- * 带帽子造型的套装不填 colors.hat，避免和 chibi 自带的扁帽叠在一起；配件由 buildAccessory 挂到头上。
+ * 带帽子造型的套装不填 colors.hat，避免和 chibi 自带的扁帽叠在一起。
+ * 头上配件走 buildAccessory，身上配件走 buildBodyAccessory。
  */
+import * as kit from '@/art/kit';
 import { COLORS } from '@/art/colors';
-import { keffiyeh, nemes, obi, parisLook, sailorCollar, strawHat, sugegasa } from './accessories';
+import { beret, keffiyeh, nemes, obi, sailorCollar, shirtStripes, strawHat, stripedScarf, sugegasa } from './accessories';
 import type { OutfitDef } from './types';
 
 export const OUTFITS: OutfitDef[] = [
@@ -13,14 +15,14 @@ export const OUTFITS: OutfitDef[] = [
     name: '浴衣',
     origin: 'tokyo',
     colors: { top: '#2c4c7c', bottom: '#1c3054' },
-    buildAccessory: () => obi('#c5364e', '#f0d078'),
+    buildBodyAccessory: () => obi('#c5364e', '#f0d078'),
   },
   {
     id: 'tokyo-student',
     name: '和风学生装',
     origin: 'tokyo',
     colors: { top: '#2a4580', bottom: '#1a2236' },
-    buildAccessory: () => sailorCollar(COLORS.white, '#c23b4a'),
+    buildBodyAccessory: () => sailorCollar(COLORS.white, '#c23b4a'),
   },
   {
     id: 'tokyo-kasa',
@@ -55,7 +57,12 @@ export const OUTFITS: OutfitDef[] = [
     name: '条纹衫',
     origin: 'paris',
     colors: { top: '#1e4d8c', bottom: '#1a1e28' },
-    buildAccessory: () => parisLook('#243056', '#1e4d8c', '#f4f1e8', '#c44536', '#f7f4ee'),
+    buildAccessory: () => beret('#243056'),
+    buildBodyAccessory: () =>
+      kit.group(
+        shirtStripes('#1e4d8c', '#f4f1e8'),
+        stripedScarf('#c44536', '#f7f4ee'),
+      ),
   },
 ];
 

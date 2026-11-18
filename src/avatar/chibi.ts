@@ -159,13 +159,20 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
       hat.material = hatMat;
       hat.visible = o.colors.hat != null && o.colors.hat !== '';
 
-      for (const child of [...head.children]) {
-        if (child.userData.accessory) head.remove(child);
+      for (const node of [head, torso]) {
+        for (const child of [...node.children]) {
+          if (child.userData.accessory) node.remove(child);
+        }
       }
       if (o.buildAccessory) {
         const acc = o.buildAccessory();
         acc.userData.accessory = true;
         head.add(acc);
+      }
+      if (o.buildBodyAccessory) {
+        const acc = o.buildBodyAccessory();
+        acc.userData.accessory = true;
+        torso.add(acc);
       }
     },
   };
