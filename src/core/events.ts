@@ -41,6 +41,10 @@ export interface GameEvents {
   'time:changed': { mapId: string; time: TimeId | null };
   /** 每秒一次的性能采样（A1），由只读的探针发出。calls / triangles 不含阴影遍 */
   'perf:sample': { fps: number; worstMs: number; calls: number; triangles: number; gpu: string };
+  /** 玩家起跳（B1） */
+  'player:jump': Record<string, never>;
+  /** 玩家落地。speed = 落地前的下落速度（米/秒） */
+  'player:land': { speed: number };
 }
 
 type Handler<T> = (payload: T) => void;
