@@ -24,7 +24,10 @@
 1. **不要修改「🔒 Claude 保留区」的文件**。如果确实需要改接口，在任务卡「完成记录」里写“需要 Claude 修改：…”，然后用变通方案或先停下。
 2. **所有颜色来自调色板**（`ctx.palette` / 地图卡的 `palette.ts`）。不要在模型代码里散落 `#xxxxxx`（角色肤色、木头/石头等“材质固有色”可以集中写在 `src/art/colors.ts`）。
 3. **所有模型用 `src/art/kit.ts` 的函数拼**（box / cylinder / cone / ball / prism / group）。不要直接 `new MeshStandardMaterial`，不要加载外部贴图或 glTF 模型（除非任务卡明确允许）。
-4. **系统之间用 `bus`（`src/core/events.ts`）通信**。UI 不直接调用 World / Player 的方法。
+4. **系统之间用 `bus`（`src/core/events.ts`）通信**。
+   - `src/ui/**`：只能通过 `bus` 和游戏交互，不 import World / Player / Engine。快捷键一律用 `keys.bind`（`src/core/ui.ts`），不要自己监听 keydown；查询弹窗状态用 `modals`
+   - 世界空间的表现层（`src/npc/` 的气泡、`src/fx/` 特效）可以**只读**访问 World / Engine，由 main.ts 传入，不要修改它们的状态
+   - 调试对象挂到 main.ts 的 `__game` 上（仅 dev 模式），不要另开 `window.__xxx`
 5. 不引入新的 npm 依赖（除非任务卡允许）。
 6. TypeScript strict，`npm run build` 零错误。
 7. 注释和 UI 文案用中文。
@@ -32,7 +35,7 @@
 ## 🔒 Claude 保留区（Cursor 只读）
 
 ```
-src/core/**            引擎、输入、事件总线、设置
+src/core/**            引擎、输入、事件总线、设置、弹窗栈与按键路由（ui.ts）
 src/render/**          卡通材质、描边、调色板类型
 src/world/MapCard.ts   地图卡契约
 src/world/World.ts     地图加载 / 碰撞

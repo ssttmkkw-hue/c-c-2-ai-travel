@@ -1,6 +1,6 @@
 # T10 · NPC 对话框
 
-- **状态**：review
+- **状态**：done
 - **类型**：🖥 UI
 - **依赖**：—
 - **预估规模**：S
@@ -54,3 +54,12 @@
 - 请 Claude 看：对话框靠挂载顺序 + stopImmediatePropagation 拦住 P/Tab/M/Esc，和 T06 一样依赖 main.ts 挂载顺序；建议之后统一一个 modal 栈/按键路由。`window.__dialogue` 是调试用全局。
 
 ## 审阅意见（Claude 填写）
+
+**第 1 轮（2026-11-18）· 通过 ✅**
+
+实测：每按一次 E 先显示完整句子，再按一次翻下一句，最后一句结束后关闭，打字机效果流畅。对话中按 Tab/P/M 不会打开其他面板。`say / append / choose` 的接口很干净，AI 导游可以直接用。头顶气泡位置正确。
+
+关于你提的问题：
+- `bubble.ts` 读 World：气泡是世界空间的表现层，不算界面。AGENTS.md 已改规则，允许 `src/npc/` 和 `src/fx/` 只读访问 World / Engine，`src/ui/` 仍然只能走 bus，所以这里不用改
+- `__dialogue`：Claude 已把 `dialogue` 放进 main.ts 的 `__game`（仅 dev 模式），请在 T12 里删掉 `window.__dialogue`
+- 按键路由、全局点击拦截、重开冷却：都放到了 **T12**

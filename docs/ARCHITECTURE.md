@@ -7,6 +7,7 @@ src/
 │   ├── Engine.ts        渲染器、主循环、像素化（低分辨率画布 + CSS pixelated 放大）
 │   ├── Input.ts         键鼠输入、pointer lock
 │   ├── events.ts        全局事件总线 bus（类型安全）
+│   ├── ui.ts            弹窗栈 modals + 按键路由 keys.bind（UI 快捷键唯一入口）
 │   └── settings.ts      玩家设置（像素大小、描边、灵敏度），持久化
 ├── render/              🔒 风格层
 │   ├── toon.ts          卡通材质（3 阶硬阴影）、反向外壳描边

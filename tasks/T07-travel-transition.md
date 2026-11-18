@@ -24,7 +24,7 @@
 3. 过场颜色使用目标地图卡的 `palette.sky` / `palette.accent`
 4. 纯 CSS/Canvas2D 实现，不碰 WebGL 场景
 
-5. 过场期间发 `ui:modal { id: 'transition', open }` 冻结玩家
+5. 过场期间发 `ui:modal { id: 'transition', open }` 冻结玩家（这时所有快捷键自动失效，见 `src/core/ui.ts`）
 
 ## 验收清单
 

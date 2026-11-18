@@ -26,10 +26,11 @@
    - tokyo：浴衣（配色 + 腰带）、和风学生装
    - egypt：头巾旅人装、法老 cosplay
    - paris：条纹衫 + 贝雷帽
-3. 衣柜 UI `src/ui/wardrobe/`：按 **B** 键打开/关闭，按地图卡分组显示服装卡片（名字 + 色块预览），点击即换装
+3. 衣柜 UI `src/ui/wardrobe/`：按 **B** 键打开/关闭（用 `keys.bind('game', 'KeyB', …)` 和 `keys.bind('wardrobe', ['KeyB', 'Escape'], …)`，见 `src/core/ui.ts`），按地图卡分组显示服装卡片（名字 + 色块预览），点击即换装
    - 打开/关闭时发 `bus.emit('ui:modal', { id: 'wardrobe', open })`（会自动冻结玩家并释放鼠标）
 4. 换装：`bus.emit('outfit:equip', { outfitId })`（Player 已监听）
 5. 暂时所有服装都可用（解锁逻辑等存档系统，Claude 负责）
+6. 给东京的 3 个 NPC 分配不同服装（`NpcDef.outfit`），现在他们和玩家长得一模一样
 
 ## 验收清单
 

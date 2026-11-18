@@ -13,5 +13,5 @@ alwaysApply: true
 核心约定速记：
 - 模型只用 `@/art/kit` 拼（box/cylinder/cone/ball/prism/group/place），颜色只用调色板
 - 道具/建筑正面朝 +Z；角色面朝 -Z
-- 系统通信只用 `bus`（`@/core/events`）
+- 系统通信只用 `bus`（`@/core/events`）；UI 快捷键只用 `keys.bind`（`@/core/ui`），不要自己监听 keydown
 - 单位米，角色身高约 1.2m，物体原点在底部中心

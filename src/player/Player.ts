@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import type { Engine } from '@/core/Engine';
 import { bus } from '@/core/events';
+import { modals } from '@/core/ui';
 import type { World } from '@/world/World';
 import { createAvatar } from '@/avatar';
 import type { AvatarRig } from '@/avatar/types';
@@ -25,7 +26,6 @@ export class Player {
   private velY = 0;
   private facing = 0;
   private nearbyNpc: string | null = null;
-  private openModals = new Set<string>();
 
   constructor(private engine: Engine, private world: World) {
     this.cam = new CameraRig(engine);
@@ -34,12 +34,6 @@ export class Player {
     bus.on('map:loaded', ({ card }) => this.teleport(card.spawn.x, card.spawn.z, card.spawn.yaw));
     bus.on('camera:mode', ({ mode }) => (this.avatar.root.visible = mode === 'third'));
     bus.on('outfit:equip', ({ outfitId }) => this.avatar.setOutfit(outfitId));
-    bus.on('ui:modal', ({ id, open }) => {
-      if (open) {
-        this.openModals.add(id);
-        document.exitPointerLock?.();
-      } else this.openModals.delete(id);
-    });
     engine.onUpdate((dt) => this.update(dt));
   }
 
@@ -51,7 +45,7 @@ export class Player {
 
   /** 是否有 UI 弹窗打开（此时冻结玩家输入） */
   get inputBlocked(): boolean {
-    return this.openModals.size > 0;
+    return modals.any();
   }
 
   private update(dt: number): void {
