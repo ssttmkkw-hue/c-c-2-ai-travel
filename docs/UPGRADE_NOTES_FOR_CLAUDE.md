@@ -384,3 +384,11 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 - **改了什么**：`kit.waterSurface` 用 `ShaderMaterial`（带雾）画流动色带、天色和岸边泡沫。低画质 `cheap`：泡沫不起伏、色带更慢、天色掺得少。像素风把色带量化。World 每帧 `syncWaterFrame`。塞纳河、尼罗河换掉原来的色块加半透明波纹盒子。
 - **为什么**：两片河是画面里最平的部分，波纹盒子还各占几次半透明绘制。
 - **影响**：合批会跳过非卡通材质，河面各留 1 次绘制，波纹盒子没了。`kit` 新增 `waterSurface` / `WaterColors`，旧的 `box` 用法不变。材质不进 `toonMaterial` 缓存，换图时随几何体留在被卸载的 mesh 上（和以前的半透明波纹一样，不手动 dispose 材质）。雾 uniform 用 `UniformsLib.fog` 合并进材质，否则 three r170 在 `refreshFogUniforms` 里会读到空的 `fogColor`。时间 uniform 在 merge 之后指回共享对象，否则每条河各冻在 0 秒。
+
+### P1-7 分包
+
+#### `vite.config.ts`（不在保留区清单里，记一笔）
+
+- **改了什么**：`manualChunks` 把 `node_modules/three` 打成单独的 `three` 包。
+- **为什么**：主包超过 vite 的 500KB 提示。three 几乎不变，拆出去可以长期缓存。
+- **影响**：入口不再静态内联 three。这次构建大约是入口 100KB、three 475KB（gzip 38KB / 120KB），没有超过 500KB 的警告。地图卡仍是静态 import：护照和过场首屏就要调色板和地名，对话兜底还要扫全部 NPC，改成动态 `import()` 得动 `MapCard` 的加载契约和这三处，这轮没做。
