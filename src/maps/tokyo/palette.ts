@@ -4,6 +4,7 @@ import type { Palette } from '@/render/palette';
 export const palette: Palette = {
   sky: '#f6b8c8',
   skyTop: '#a488e0',
+  cloudDensity: 0.5,
   fog: '#f6b2c2',
   fogNear: 36,
   fogFar: 115,

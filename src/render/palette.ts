@@ -7,6 +7,11 @@ export interface Palette {
   sky: string;
   /** 天顶色（可选）。天空渐变：地平线 fog → sky → 天顶 skyTop，一般比 sky 更深、更饱和 */
   skyTop?: string;
+  /**
+   * 云的疏密（可选，默认 0.4）。0 没有云，1 很密。
+   * 云画在天空穹顶里，颜色由雾色提亮得到，不额外占绘制。
+   */
+  cloudDensity?: number;
   /** 雾色 = 天空地平线的颜色，远景会融进去 */
   fog: string;
   fogNear: number;

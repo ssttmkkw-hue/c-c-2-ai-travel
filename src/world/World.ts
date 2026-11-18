@@ -70,7 +70,10 @@ export class World {
     bus.on('settings:changed', () => this.applyShadowQuality());
     // Player 在 World 之后才注册自己的 onUpdate。微任务排到同步初始化之后，
     // 这样阴影焦点用的是本帧已经写好的玩家位置，而不是上一帧的。
-    queueMicrotask(() => engine.onUpdate(() => this.updateShadowFocus()));
+    queueMicrotask(() => engine.onUpdate((_dt, t) => {
+      this.updateShadowFocus();
+      this.sky.setTime(t);
+    }));
     engine.scene.add(s, s.target, this.hemi, this.sky.mesh);
     this.sky.setBanded(getSettings().renderMode === 'pixel');
     bus.on('settings:changed', (st) => this.sky.setBanded(st.renderMode === 'pixel'));
@@ -185,7 +188,7 @@ export class World {
     scene.background = new THREE.Color(p.fog);
     scene.fog = new THREE.Fog(p.fog, p.fogNear, p.fogFar);
     this.setSunDirection(p.sunDirection ?? DEFAULT_SUN_DIR);
-    this.sky.set(p.skyTop ?? p.sky, p.sky, p.fog, p.sun, this.sun.position);
+    this.sky.set(p.skyTop ?? p.sky, p.sky, p.fog, p.sun, this.sun.position, p.cloudDensity ?? 0.4);
     this.engine.setGrade(p.exposure ?? 1, p.saturation ?? DEFAULT_SATURATION);
     this.sun.color.set(p.sun);
     this.sun.intensity = p.sunIntensity;
