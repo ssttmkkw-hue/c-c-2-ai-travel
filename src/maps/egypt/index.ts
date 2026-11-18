@@ -89,11 +89,6 @@ const card: MapCardDef = {
     ctx.onUpdate((_dt, t) => {
       anim.camelHead.rotation.x = Math.sin(t * 0.7) * 0.16;
       anim.sail.rotation.z = Math.sin(t * 0.55) * 0.07;
-      for (let i = 0; i < anim.waves.length; i++) {
-        const wave = anim.waves[i];
-        wave.position.y = 0.16 + Math.sin(t * 0.85 + i * 1.1) * 0.03;
-        wave.position.x = Math.sin(t * 0.35 + i * 0.8) * 0.55;
-      }
     });
 
     if (import.meta.env.DEV && budget.meshes > MESH_BUDGET) {

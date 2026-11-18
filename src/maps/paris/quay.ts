@@ -23,7 +23,6 @@ export interface Pecker {
 }
 
 export interface QuayAnim {
-  waves: THREE.Object3D[];
   flyers: Flyer[];
   peckers: Pecker[];
 }
@@ -74,25 +73,13 @@ function createBridge(p: MapBuildContext['palette']): THREE.Group {
 export function buildQuay(ctx: MapBuildContext, add: Add): QuayAnim {
   const p = ctx.palette;
 
-  const water = kit.group(
-    kit.box(86, 0.12, WATER_HALF_Z * 2, p.accent[2], {
-      y: 0.06, outline: false, shadow: false,
-    }),
-  );
-  const waves: THREE.Object3D[] = [];
-  for (let i = 0; i < 4; i++) {
-    const wave = kit.box(14, 0.04, 3.2, p.sky, {
-      y: 0.14,
-      x: -30 + i * 18,
-      outline: false,
-      shadow: false,
-      transparent: true,
-      opacity: 0.45,
-    });
-    water.add(wave);
-    waves.push(kit.dynamic(wave));
-  }
-  add(kit.place(water, 0, RIVER_Z));
+  const water = kit.waterSurface(86, WATER_HALF_Z * 2, {
+    deep: p.accent[2],
+    shallow: p.sky,
+    foam: COLORS.white,
+    sky: p.skyTop ?? p.sky,
+  });
+  add(kit.place(water, 0, RIVER_Z, 0, 0.06));
 
   const bank = RIVER_Z + WATER_HALF_Z;
   const far = RIVER_Z - WATER_HALF_Z;
@@ -156,5 +143,5 @@ export function buildQuay(ctx: MapBuildContext, add: Add): QuayAnim {
     peckers.push({ root: bird.root, phase });
   }
 
-  return { waves, flyers, peckers };
+  return { flyers, peckers };
 }

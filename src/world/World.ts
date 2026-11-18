@@ -12,6 +12,7 @@ import { shadowConfig } from '@/render/quality';
 import { refreshToonMaterials, setOutlineColor, setShadowTuning } from '@/render/toon';
 import { batchStatic, probeDynamic } from '@/render/batch';
 import { Sky } from '@/render/sky';
+import { syncWaterFrame } from '@/render/water';
 import { getCard } from './registry';
 import { createRng } from './rng';
 import { spawnNpcs } from '@/npc/spawn';
@@ -73,6 +74,8 @@ export class World {
     queueMicrotask(() => engine.onUpdate((_dt, t) => {
       this.updateShadowFocus();
       this.sky.setTime(t);
+      const st = getSettings();
+      syncWaterFrame(t, st.quality === 'low', st.renderMode === 'pixel');
     }));
     engine.scene.add(s, s.target, this.hemi, this.sky.mesh);
     this.sky.setBanded(getSettings().renderMode === 'pixel');

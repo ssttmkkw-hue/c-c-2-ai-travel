@@ -95,11 +95,6 @@ const card: MapCardDef = {
     buildEnclosure(budget.add, p);
 
     ctx.onUpdate((_dt, t) => {
-      for (let i = 0; i < anim.waves.length; i++) {
-        const wave = anim.waves[i];
-        wave.position.y = 0.14 + Math.sin(t * 0.8 + i * 1.1) * 0.025;
-        wave.position.x = (-30 + i * 18) + Math.sin(t * 0.32 + i * 0.7) * 0.45;
-      }
       for (const bird of anim.flyers) {
         const ang = t * 0.55 + bird.phase;
         bird.root.position.set(

@@ -14,7 +14,6 @@ type Add = MapBuildContext['add'];
 export interface SouqAnim {
   camelHead: THREE.Object3D;
   sail: THREE.Object3D;
-  waves: THREE.Object3D[];
 }
 
 /** 布棚摊：四柱、三棱棚顶、柜台、地毯、陶罐。宽约 2.8m。 */
@@ -91,7 +90,7 @@ function createReed(p: MapBuildContext['palette'], variant: number): THREE.Group
 
 /**
  * 河在西、集市在东。河面碰撞挡住下河，码头石沿再挡一层。
- * 返回需要每帧轻动的驼头、帆和波纹。
+ * 返回需要每帧轻动的驼头和帆。河面本身用着色器动，不用再推波纹盒子。
  */
 export function buildSouq(ctx: MapBuildContext, add: Add): SouqAnim {
   const p = ctx.palette;
@@ -117,23 +116,13 @@ export function buildSouq(ctx: MapBuildContext, add: Add): SouqAnim {
   const boat = createFelucca(p);
   add(kit.place(boat.root, -31.5, 2.5, 0.18, 0.02));
 
-  const nile = kit.group(
-    kit.box(18, 0.14, 76, p.accent[0], { y: 0.08, outline: false, shadow: false }),
-  );
-  const waves: THREE.Object3D[] = [];
-  for (let i = 0; i < 5; i++) {
-    const wave = kit.box(11, 0.04, 7, p.sky, {
-      y: 0.16,
-      z: -28 + i * 14,
-      outline: false,
-      shadow: false,
-      transparent: true,
-      opacity: 0.42,
-    });
-    nile.add(wave);
-    waves.push(kit.dynamic(wave));
-  }
-  add(kit.place(nile, -31.2, -2));
+  const nile = kit.waterSurface(18, 76, {
+    deep: p.accent[0],
+    shallow: p.sky,
+    foam: COLORS.white,
+    sky: p.skyTop ?? p.sky,
+  }, 0.14);
+  add(kit.place(nile, -31.2, -2, 0, 0.08));
   ctx.addCollider(new THREE.Box3(
     new THREE.Vector3(-40.6, 0, -40),
     new THREE.Vector3(-22.4, 1.5, 36),
@@ -172,5 +161,5 @@ export function buildSouq(ctx: MapBuildContext, add: Add): SouqAnim {
   add(kit.place(bush(p, 1), -17.8, -8));
   add(kit.place(bush(p, 2), 24.5, 9.5));
 
-  return { camelHead: kit.dynamic(camel.head), sail: kit.dynamic(boat.sail), waves };
+  return { camelHead: kit.dynamic(camel.head), sail: kit.dynamic(boat.sail) };
 }

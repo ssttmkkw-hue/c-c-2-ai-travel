@@ -19,6 +19,9 @@
 import * as THREE from 'three';
 import { toonMaterial, addOutline, type ToonOptions } from '@/render/toon';
 import { markDynamic } from '@/render/batch';
+import { createWaterMaterial, type WaterColors } from '@/render/water';
+
+export type { WaterColors };
 
 export interface PartOpts extends ToonOptions {
   x?: number;
@@ -87,6 +90,22 @@ export function group(...children: THREE.Object3D[]): THREE.Group {
   const g = new THREE.Group();
   children.forEach((c) => g.add(c));
   return g;
+}
+
+/**
+ * 河面。宽 width（X）、深 depth（Z），厚度默认 0.12 米，原点在盒子中心。
+ * 颜色走调色板（泡沫可以用 COLORS.white）。用 kit.place 时把 y 设成厚度的一半，顶面才贴在水线上。
+ * 着色器在 src/render/water.ts，不进卡通合批。
+ */
+export function waterSurface(width: number, depth: number, colors: WaterColors, thickness = 0.12): THREE.Mesh {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(width, thickness, depth),
+    createWaterMaterial(colors, { x: width / 2, z: depth / 2 }),
+  );
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  mesh.name = 'water';
+  return mesh;
 }
 
 /** 放置物体的小工具：kit.place(obj, x, z, rotY) */
