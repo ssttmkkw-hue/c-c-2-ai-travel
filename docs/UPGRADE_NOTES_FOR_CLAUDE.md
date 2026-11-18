@@ -392,3 +392,11 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 - **改了什么**：`manualChunks` 把 `node_modules/three` 打成单独的 `three` 包。
 - **为什么**：主包超过 vite 的 500KB 提示。three 几乎不变，拆出去可以长期缓存。
 - **影响**：入口不再静态内联 three。这次构建大约是入口 100KB、three 475KB（gzip 38KB / 120KB），没有超过 500KB 的警告。地图卡仍是静态 import：护照和过场首屏就要调色板和地名，对话兜底还要扫全部 NPC，改成动态 `import()` 得动 `MapCard` 的加载契约和这三处，这轮没做。
+
+### P1-9 合批探测只在开发模式跑
+
+#### `src/world/World.ts`
+
+- **改了什么**：`probeDynamic` 包在 `import.meta.env.DEV` 里。正式构建直接合批，不再用 4 个假时间点试跑 updater。
+- **为什么**：那 4 次调用是隐式副作用（累加 dt 的动画会在加载时多走约 4/60 秒），而且三张图已经显式 `kit.dynamic`。
+- **影响**：正式构建里漏标的物体会被并进静态 mesh，动画不动，也没有警告。开发模式行为不变（控制台仍会 warn）。没有改 `MapCard` 契约，也没有加 `ctx.add(obj, { dynamic })`。`getCameraPosition()` 没做。

@@ -151,10 +151,11 @@ export class World {
 
   /**
    * 静态合批（见 src/render/batch.ts）。在 card.build() 之后、生成 NPC 之前做，所以 NPC 不会被并进去。
-   * 会动的物体靠地图卡用 kit.dynamic() 标记；漏标的用 probeDynamic 兜底，dev 模式下提示补标。
+   * 会动的物体靠地图卡用 kit.dynamic() 标记。漏标的探测只在开发模式跑：
+   * 它会用假时间多调 4 次 updater，正式构建不付这个代价，也要求作者自己标。
    */
   private batch(card: MapCardDef, root: THREE.Group, updaters: ((dt: number, time: number) => void)[]): void {
-    const unmarked = probeDynamic(root, updaters);
+    const unmarked = import.meta.env.DEV ? probeDynamic(root, updaters) : [];
     const stats = batchStatic(root, { nested: true });
     if (import.meta.env.DEV) {
       if (unmarked.length) {
