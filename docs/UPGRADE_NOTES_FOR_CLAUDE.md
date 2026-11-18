@@ -523,3 +523,25 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 ### 验证
 
 - `npm run typecheck` 通过。`npm run shots` 九张（含时段）全部 0.00%，`CONSOLE_ERRORS 0`。眼睛没有可记录的像素差。
+
+---
+
+## R1-7 · 性能脚本
+
+### `tools/perf.mjs`、`package.json`、`.gitignore`
+
+- **改了什么**：`npm run perf`。Playwright 开 Chromium（`--use-gl=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`），1280×800，`?autoquality=0`，`freezeVisual(1.5)`，镜头和视觉回归同一套。三张图 × 画质低/中/高（颗粒精细），再加画质高 × 颗粒复古。每格 rAF 量 1.2 秒、3 次，取中位数。JSON 打到 stdout，并写 `tools/perf-last.json`（gitignore）。画质通过存档再刷新生效：在页面里动态 import settings 会拿到另一份模块，引擎听不见。
+- **为什么**：以前的测量脚本在仓库外，换一台机器对不上数字。
+- **影响**：不改默认画质，不改默认颗粒。复古在 1280×800 上 `scale` 是 3，内部分辨率 427×267，仍是整数倍。
+
+### 这一次的中位数（swiftshader，只能看相对值，三次之间能差 10 帧）
+
+| 图 | 低/精细 | 中/精细 | 高/精细 | 高/复古 |
+|---|---|---|---|---|
+| 东京 | 48.3 | 41 | 32.3 | 35 |
+| 吉萨 | 40.2 | 46.4 | 37.9 | 23 |
+| 巴黎 | 58.8 | 45.8 | 36.6 | 23.6 |
+
+高画质主场景 draw call（这个固定镜头，不含阴影遍）：东京 122、吉萨 79、巴黎 64。出生点不固定镜头时巴黎是 117（镜头外的东西被视锥剔掉了）。三角形在低画质更少，是地面细节和粒子关掉了，不是这次的关节合并。复古这一档没有稳定地比精细更快，噪声盖过了 427×267 和 640×400 的差别，所以默认颗粒不动。
+
+`node /workspace/pwtool/fableshots.mjs fable-r2`：`CONSOLE_ERRORS 0`。截图在 `/workspace/c-c-2-shots/fable-r2-*.png`（另有竖屏 `fable-r2-phone-tokyo.png`、`fable-r2-phone-egypt.png`）。出生点、单次 2 秒 rAF：1280 东京 / 吉萨 / 巴黎 21 / 35.5 / 32 fps；1920 21 / 23 / 22；Retina 东京 15。和以前写的 19 / 20 / 17.5 不是同一次、也不是冻结镜头，不能当成这次改动的收益。阴影 2048、缓冲 ubyte、补丁 true。

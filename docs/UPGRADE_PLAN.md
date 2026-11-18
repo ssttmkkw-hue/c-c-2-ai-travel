@@ -295,7 +295,7 @@
 | P0-2 | 渲染 / 性能 | ✅ **阴影贴图封顶**（`828aa43`）。像素风：低 / 中 1024、高 2048；高清·高仍 4096。阴影相机改为罩住玩家周围 ±45 米，并吸附到阴影像素网格。同时像素风改 8 位缓冲、MSAA 只留在高清·高，地面细节和粒子按画质缩放 | 1280×800 swiftshader 从约 12 / 12 / 13.5 到约 19 / 20 / 17.5（两次）。截图里影子仍是硬边、画面仍是整数倍像素。阴影占比降到大约 15%~30%，填像素仍是大头 | 已做 |
 | P0-3 | 代码架构 | ✅ **锁定 three 版本**（`828aa43`：`^0.170.0` → `0.170.0`）。阴影补丁是否生效：`shadowPatchApplied`（`99b1ab0` 挂到 `__game` 和 `qualityReport()`）；对不上时 `console.warn`，不再只在开发构建里响 | 消除 3.3 第 1 条的静默退化风险。本次实测 `patch: true` | 已做 |
 | P0-4 | UX / 手机端 | ✅ **画质自动检测**（`99b1ab0`）。R1 补丁：采样改用帧间隔中位数；标签页隐藏或超过 1 秒的间隔整段重来，避免后台被写成 0 帧。梯子最后一级在低画质上把像素颗粒往复古降一档，不写 `qualityManual`。`?autoquality=0`、手动改过画质、设置里关掉，都不再自动改 | 分辨率档提示会写明「分辨率」。1280×800 上标准→复古时 `scale` 仍是整数（3）。`shots` 带 `?autoquality=0`，基线不受影响 | 已做 |
-| P0-5 | 代码架构 | ✅ **视觉回归**（`c38b776`）。`tools/visual-check.mjs` + devDependency `playwright@1.65.1`，`npm run shots`。640×400、`freezeVisual(1.5)` 停住模拟时间，基准图在 `tools/baseline/`（三张合计约 90KB）。差异用页面 canvas 逐像素算，图写到 gitignore 的 `tools/diff/`。单通道差 >18、占比 >1.5% 失败 | 改完云和水之后基准图重截过，同一提交里再跑是 0% 差异。用法在 README | 已做 |
+| P0-5 | 代码架构 | ✅ **视觉回归**（`c38b776`）。`tools/visual-check.mjs` + devDependency `playwright@1.65.1`，`npm run shots`。640×400、`freezeVisual(1.5)` 停住模拟时间，基准图在 `tools/baseline/`。R1 追加了 6 张时段图，原来三张仍是 0%。`npm run perf`（`tools/perf.mjs`）输出三张图 × 三档画质 + 复古颗粒的 fps 中位数，JSON 在 gitignore 的 `tools/perf-last.json` | 差异用页面 canvas 逐像素算。单通道差 >18、占比 >1.5% 失败 | 已做 |
 
 ### P1 · 值得做（观感或体验有明显提升）
 

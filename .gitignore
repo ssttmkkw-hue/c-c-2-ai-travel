@@ -5,3 +5,4 @@ dist
 .env
 .env.*
 tools/diff/
+tools/perf-last.json

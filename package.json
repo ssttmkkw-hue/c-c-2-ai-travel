@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "shots": "node tools/visual-check.mjs"
+    "shots": "node tools/visual-check.mjs",
+    "perf": "node tools/perf.mjs"
   },
   "dependencies": {
     "three": "0.170.0"
