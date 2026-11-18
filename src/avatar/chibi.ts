@@ -14,7 +14,7 @@ const HAIR = COLORS.woodDark;
 const EYE = COLORS.black;
 const SHOE = COLORS.black;
 
-const HIP_Y = 0.44;
+const HIP_Y = 0.48;
 
 function damp(current: number, target: number, lambda: number, dt: number): number {
   return current + (target - current) * (1 - Math.exp(-lambda * dt));
@@ -121,7 +121,7 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
       lean = damp(lean, leanT, 6, dt);
       armOut = damp(armOut, airT, 8, dt);
       hips.position.y = HIP_Y + bob + breathY;
-      torso.rotation.x = lean;
+      torso.rotation.x = -lean;
       torso.rotation.z = damp(torso.rotation.z, swing * 0.05 * walk * ground, 8, dt);
 
       const tuck = armOut;
@@ -134,8 +134,8 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
       armR.rotation.x = damp(armR.rotation.x, swing * armAmp * ground, 10, dt);
       armL.rotation.z = damp(armL.rotation.z, -tuck * 1.15, 8, dt);
       armR.rotation.z = damp(armR.rotation.z, tuck * 1.15, 8, dt);
-      elbowL.rotation.x = damp(elbowL.rotation.x, -0.25 * Math.max(swing, 0) * walk * ground, 10, dt);
-      elbowR.rotation.x = damp(elbowR.rotation.x, -0.25 * Math.max(-swing, 0) * walk * ground, 10, dt);
+      elbowL.rotation.x = damp(elbowL.rotation.x, 0.25 * Math.max(swing, 0) * walk * ground, 10, dt);
+      elbowR.rotation.x = damp(elbowR.rotation.x, 0.25 * Math.max(-swing, 0) * walk * ground, 10, dt);
 
       blinkTimer -= dt;
       if (blinkTimer <= 0 && blinkLeft <= 0) {
@@ -156,6 +156,7 @@ export function createChibiAvatar(outfitId: string): AvatarRig {
       for (const m of tops) m.material = topMat;
       for (const m of bottoms) m.material = bottomMat;
       hat.material = hatMat;
+      hat.visible = o.colors.hat != null && o.colors.hat !== '';
 
       for (const child of [...head.children]) {
         if (child.userData.accessory) head.remove(child);

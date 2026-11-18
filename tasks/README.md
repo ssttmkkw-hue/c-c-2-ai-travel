@@ -9,7 +9,7 @@
 |---|---|---|---|---|
 | [T01](T01-props-library.md) | 通用道具库 | 🎨 美术 | — | todo（小修） |
 | [T02](T02-map-tokyo.md) | 东京地图卡完整版 | 🎨 美术 | T01 | todo |
-| [T03](T03-avatar-model.md) | Q 版角色模型 + 程序动画 | 🎨 美术 | — | todo（小修） |
+| [T03](T03-avatar-model.md) | Q 版角色模型 + 程序动画 | 🎨 美术 | — | done |
 | [T04](T04-outfits.md) | 服装系统 + 当地服装 | 🎨 美术 | T03 | todo |
 | [T05](T05-ui-passport.md) | 护照选卡界面 | 🖥 UI | — | done |
 | [T06](T06-ui-settings-hud.md) | 设置面板 + 正式 HUD | 🖥 UI | — | todo |

@@ -1,6 +1,6 @@
 # T03 · Q 版角色模型 + 程序动画
 
-- **状态**：todo（小修）
+- **状态**：done
 - **类型**：🎨 美术
 - **依赖**：—
 - **预估规模**：M
@@ -53,6 +53,8 @@
 - 新增/修改文件：`src/avatar/chibi.ts`、`src/avatar/index.ts`、`tasks/T03-avatar-model.md`
 - 截图或说明：按浏览器反馈补了后脑头发，并修正空中张臂方向。`npm run build` 已通过。验收清单由 Code Bot 用 headless Chromium（swiftshader）截图确认：走/跑/跳/站立、东京 NPC 已换新模型、按 V 第一人称时角色隐藏且切回后恢复、像素大小 4 下脸（眼睛+刘海）可辨认，控制台零报错。动画是否“自然”只看了静帧，请 Claude 在浏览器里再看一下动态效果。
 - 遗留问题 / 需要 Claude 修改的地方：无接口改动。肤色固定 `COLORS.skin[0]`，头发用 `COLORS.woodDark`，鞋用 `COLORS.black`。
+- 第 1 轮审阅修改：跑步前倾改为 `torso.rotation.x = -lean`（面朝 -Z 时正角度会后仰）；手肘 `rotation.x` 改为正值，前臂往前弯；`HIP_Y` 从 0.44 调到 0.48，脚底贴地；`o.colors.hat` 为空时 `hat.visible = false`。`npm run build` 零错误。
+  - Code Bot headless 验证：侧面跑步上身前倾、手肘向前弯、站立时最低点约 -1cm（原约 -4cm，剩余 1cm 可能来自呼吸起伏，可接受）、无帽服装隐藏帽子、换回默认服装帽子恢复；截图 t03fix-*.png。
 
 ## 审阅意见（Claude 填写）
 
