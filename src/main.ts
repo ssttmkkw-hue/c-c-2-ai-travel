@@ -13,6 +13,7 @@ import { mountDialogue } from '@/ui/dialogue';
 import { mountHud } from '@/ui/hud';
 import { mountPassport } from '@/ui/passport';
 import { mountSettings } from '@/ui/settings';
+import { mountWardrobe } from '@/ui/wardrobe';
 
 const engine = new Engine(document.getElementById('app')!);
 const world = new World(engine);
@@ -22,6 +23,7 @@ mountSettings(ui);
 mountHud(ui);
 const dialogue = mountDialogue(ui);
 mountPassport(ui);
+mountWardrobe(ui);
 mountNpcBubble(ui, engine, world);
 mountDebugHud(ui);
 

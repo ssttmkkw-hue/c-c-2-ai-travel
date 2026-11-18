@@ -39,6 +39,7 @@ const card: MapCardDef = {
       x: 5.2,
       z: 19.5,
       yaw: Math.PI * 0.88,
+      outfit: 'tokyo-student',
       lines: [
         '欢迎来到东京的黄昏。我是导游小樱。',
         '这条石板路是神社参道，正前方的朱红鸟居就是入口。',
@@ -56,6 +57,7 @@ const card: MapCardDef = {
       x: 14.2,
       z: 3.55,
       yaw: Math.PI,
+      outfit: 'tokyo-yukata',
       lines: [
         '汤头刚熬好，晚上这条街比白天亮得多。',
         '居酒屋的红灯笼会轻轻晃，别撞到招牌。',
@@ -67,6 +69,7 @@ const card: MapCardDef = {
       x: -3.4,
       z: 12.2,
       yaw: 0.15,
+      outfit: 'tokyo-straw',
       lines: [
         '穿过鸟居记得走中间，两边是留给神明的。',
         '你看东北边那座红白铁塔，黄昏里最清楚。',
