@@ -26,13 +26,14 @@ export interface Settings {
   /** 鼠标灵敏度 */
   mouseSensitivity: number;
   /**
-   * 进图后如果帧率明显低于 30，自动把画质降一档。
+   * 进图后如果帧率明显低于 30，自动降一档。
+   * 梯子：高→中→低画质；已经是低画质时，像素风再把颗粒往复古降一级。
    * 地址栏 `?autoquality=0` 会在当次打开时关掉（不写入这里），给无头测试用。
    */
   autoQuality: boolean;
-  /** 玩家自己改过画质之后为 true，自动降档不再改 */
+  /** 玩家自己改过画质之后为 true，自动降档不再改画质，也不改像素颗粒 */
   qualityManual: boolean;
-  /** 自动降档已经做过一次（只降一档，并只提示一次） */
+  /** 自动降档已经做过一次（只走梯子一步，并只提示一次） */
   autoQualityDone: boolean;
 }
 

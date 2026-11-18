@@ -404,3 +404,18 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 ### 文档
 
 `docs/UPGRADE_PLAN.md` 第 4 节打了勾（P0-5、P1-3、P1-5、P1-7、P1-9 的探测一半），2.9 补了本轮两次帧率。帧率两次差一倍，不能当成云或水面的稳定开销。
+
+---
+
+## R1-1 · 自动降档：后台采样 + 分辨率档
+
+### `src/ui/autoQuality.ts`、`src/render/quality.ts`、`src/core/settings.ts`
+
+- **改了什么**：有效帧时间累计满 2.5 秒后，用帧间隔的**中位数**算 fps（不再用墙钟平均）。`document.hidden`，或单帧间隔超过 1 秒，整段采样作废重来，不写 `autoQualityDone`。画质已经是低、且是像素风时，最后一级把 `pixelDensity` 往复古降一档（`coarserPixelDensity`）。这一步 `updateSettings(..., 'auto')`，不写 `qualityManual`。提示文案会写「分辨率」。
+- **为什么**：后台 rAF 暂停时，墙钟已经超过 2.5 秒而帧数只有 1，会被当成约 0 帧并写进存档。另外 `quality` 降到低之后，1280×800 上只有把颗粒降到复古才会少掉填充率（精细和标准的 scale 都是 2，复古是 3）。
+- **影响**：默认画质和默认 `pixelDensity` 没变。`?autoquality=0` 仍是当次关闭。玩家手动改画质之后，画质和颗粒都不再自动改。整数倍放大仍由 `computeView` 保证。高清模式没有颗粒这一档（`pixelDensity` 不影响高清分辨率）。
+
+### 验证
+
+- `npm run typecheck` 通过。`npm run shots`：东京 / 吉萨 / 巴黎 0.00%，`CONSOLE_ERRORS 0`。
+- `node tools/autoquality-hidden.mjs`：采样中暂停 rAF 4 秒并拨到 `document.hidden`，恢复后几百毫秒内存档仍是高画质、精细、`autoQualityDone=false`。低画质 + 标准颗粒、每帧空转约 45ms：降到复古，`qualityManual=false`，`scale=3`，内部分辨率 427×267，提示含「分辨率」。

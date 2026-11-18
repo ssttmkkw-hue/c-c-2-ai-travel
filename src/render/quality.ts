@@ -76,6 +76,20 @@ export function shadowConfig(s: ViewInput): ShadowConfig {
 /** 像素风：虚拟分辨率的目标短边（虚拟像素）。实际值会取到最接近的整数倍放大 */
 export const PIXEL_TARGET: Record<PixelDensity, number> = { coarse: 270, normal: 360, fine: 540 };
 
+const COARSER_DENSITY: Record<PixelDensity, PixelDensity | null> = {
+  fine: 'normal',
+  normal: 'coarse',
+  coarse: null,
+};
+
+/**
+ * 自动降档梯子的最后一级：像素颗粒往更粗走一档（精细 → 标准 → 复古）。
+ * 已经是复古则没有下一级。`scale` 仍由 computeView 取整，不会变成非整数。
+ */
+export function coarserPixelDensity(d: PixelDensity): PixelDensity | null {
+  return COARSER_DENSITY[d];
+}
+
 /** 物理短边不小于这个值时，像素风至少放大 2 倍（否则就不是像素风了） */
 const PIXEL_MIN_SHORT_FOR_2X = 480;
 
