@@ -3,6 +3,7 @@
  * 新增事件：在 GameEvents 里加一行类型即可。
  */
 import type { MapCardDef } from '@/world/MapCard';
+import type { RenderView } from '@/render/quality';
 import type { Settings } from './settings';
 
 export interface GameEvents {
@@ -17,6 +18,11 @@ export interface GameEvents {
   'map:loaded': { card: MapCardDef };
   /** 设置变更 */
   'settings:changed': Settings;
+  /**
+   * 渲染分辨率变化（窗口尺寸 / 屏幕缩放 / 画面设置变了），Engine 发出。engine.start() 时也会发一次。
+   * UI 用它显示“当前渲染 640×360 ×3”之类的信息；后期特效可以据此调整。
+   */
+  'render:view': RenderView;
   /** 视角切换 */
   'camera:mode': { mode: 'third' | 'first' };
   /** 玩家附近可交互的 NPC 变化（null = 没有），UI 用来显示“按 E 交谈”提示 */

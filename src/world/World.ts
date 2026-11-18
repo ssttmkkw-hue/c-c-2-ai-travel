@@ -7,10 +7,19 @@ import type { Engine } from '@/core/Engine';
 import { bus } from '@/core/events';
 import type { MapCardDef, MapBuildContext } from './MapCard';
 import type { Palette } from '@/render/palette';
-import { setOutlineColor } from '@/render/toon';
+import { getSettings } from '@/core/settings';
+import { shadowConfig } from '@/render/quality';
+import { refreshToonMaterials, setOutlineColor, setShadowTuning } from '@/render/toon';
 import { getCard } from './registry';
 import { createRng } from './rng';
 import { spawnNpcs } from '@/npc/spawn';
+
+/** 太阳阴影相机覆盖的范围（正交，半边长，米）。要盖住整张地图卡 + 外圈远景 */
+const SHADOW_HALF = 60;
+const SHADOW_NEAR = 1;
+const SHADOW_FAR = 150;
+/** 固定阴影偏移（米，朝光源方向）。只需盖住深度精度误差；倾斜面的误差由 toon.ts 的坡度偏移负责 */
+const SHADOW_BIAS_M = 0.015;
 
 export class World {
   current: MapCardDef | null = null;
@@ -31,14 +40,15 @@ export class World {
     const s = this.sun;
     s.position.set(30, 50, 20);
     s.castShadow = true;
-    s.shadow.mapSize.set(2048, 2048);
     const c = s.shadow.camera;
-    c.left = c.bottom = -60;
-    c.right = c.top = 60;
-    c.near = 1;
-    c.far = 150;
-    s.shadow.bias = -0.0005;
-    s.shadow.normalBias = 0.08;
+    c.left = c.bottom = -SHADOW_HALF;
+    c.right = c.top = SHADOW_HALF;
+    c.near = SHADOW_NEAR;
+    c.far = SHADOW_FAR;
+    s.shadow.bias = -SHADOW_BIAS_M / (SHADOW_FAR - SHADOW_NEAR);
+    s.shadow.normalBias = 0; // 不用法线偏移：它会把背光面往阴影里推，正好和卡通色阶打架（见 toon.ts 的阴影补丁）
+    this.applyShadowQuality();
+    bus.on('settings:changed', () => this.applyShadowQuality());
     engine.scene.add(s, s.target, this.hemi);
     bus.on('map:request', ({ id }) => void this.load(id));
   }
@@ -101,6 +111,27 @@ export class World {
       if ((o as THREE.Mesh).isMesh && o.name !== '__outline') (o as THREE.Mesh).geometry.dispose();
     });
     this.root = null;
+  }
+
+  /** 按画面风格 + 画质档位设置阴影贴图分辨率和过滤方式（见 src/render/quality.ts 的 shadowConfig） */
+  private applyShadowQuality(): void {
+    const cfg = shadowConfig(getSettings());
+    const shadowMap = this.engine.renderer.shadowMap;
+    const type = cfg.filtered ? THREE.PCFSoftShadowMap : THREE.BasicShadowMap;
+    if (shadowMap.type !== type) {
+      shadowMap.type = type;
+      refreshToonMaterials(); // 过滤方式编译在着色器里，换了要重编
+    }
+    const shadow = this.sun.shadow;
+    if (shadow.mapSize.x !== cfg.mapSize) {
+      shadow.mapSize.set(cfg.mapSize, cfg.mapSize);
+      shadow.map?.dispose(); // 下一帧按新尺寸重建
+      shadow.map = null;
+    }
+    // 坡度偏移 = 阴影贴图 1 像素在光线方向上能差出的深度 × 采样核半径（硬采样约 1 像素，PCF 约 2 像素）
+    const texel = (SHADOW_HALF * 2) / cfg.mapSize;
+    const kernel = cfg.filtered ? 2 : 1.25;
+    setShadowTuning((texel * kernel) / (SHADOW_FAR - SHADOW_NEAR), cfg.hardEdge);
   }
 
   private applyPalette(p: Palette): void {
