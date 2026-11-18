@@ -12,6 +12,27 @@ function v(variant = 0): number {
   return ((variant % 3) + 3) % 3;
 }
 
+/**
+ * 复古路灯。高约 3.6~4.1m。部件 6。
+ * 灯笼是露在灯帽和底座之间的发光块，四面都能看见，不包在外壳里。
+ * 适合巴黎清晨、老城街道。variant 切换灯色（取 accent）。
+ */
+export function vintageLamp(p: Palette, variant = 0): THREE.Group {
+  const i = v(variant);
+  const h = 3.35 + i * 0.22;
+  const glow = pick(p.accent, i);
+  return kit.group(
+    kit.cylinder(0.18, 0.24, 0.16, COLORS.metalDark, { y: 0.08, segments: 6 }),
+    kit.cylinder(0.055, 0.075, h - 0.2, COLORS.metalDark, { y: (h - 0.2) / 2 + 0.12, segments: 6 }),
+    kit.box(0.42, 0.08, 0.42, COLORS.metal, { y: h }),
+    kit.box(0.32, 0.4, 0.32, glow, {
+      y: h + 0.28, emissive: glow, emissiveIntensity: 0.6, outline: false,
+    }),
+    kit.box(0.46, 0.08, 0.46, COLORS.metalDark, { y: h + 0.52 }),
+    kit.cone(0.26, 0.28, 4, COLORS.metal, { y: h + 0.7, ry: Math.PI / 4 }),
+  );
+}
+
 /** 路灯。高 3.2~4.2m。部件 4。 */
 export function streetLamp(p: Palette, variant = 0): THREE.Group {
   const i = v(variant);

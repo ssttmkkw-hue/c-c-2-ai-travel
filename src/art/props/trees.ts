@@ -12,6 +12,23 @@ function v(variant = 0): number {
   return ((variant % 3) + 3) % 3;
 }
 
+/**
+ * 梧桐。高约 4.6~5.3m，树干高、树冠扁宽。部件 3。
+ * 行道树，巴黎、林荫道。
+ */
+export function planeTree(p: Palette, variant = 0): THREE.Group {
+  const i = v(variant);
+  const trunk = 2.2 + i * 0.18;
+  const crown = kit.ball(1, pick(p.foliage, i));
+  crown.scale.set(1.7 + i * 0.06, 0.92, 1.48);
+  crown.position.y = trunk + 0.82;
+  return kit.group(
+    kit.cylinder(0.13, 0.24, trunk, COLORS.bark, { y: trunk / 2, segments: 6 }),
+    crown,
+    kit.ball(0.78, pick(p.foliage, i + 1), { x: 0.62, y: trunk + 0.28, z: 0.18 }),
+  );
+}
+
 /** 圆冠树。高约 3.2~4.6m。部件 2~3。 */
 export function roundCrownTree(p: Palette, variant = 0): THREE.Group {
   const i = v(variant);

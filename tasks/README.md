@@ -15,7 +15,7 @@
 | [T06](T06-ui-settings-hud.md) | 设置面板 + 正式 HUD | 🖥 UI | — | done |
 | [T07](T07-travel-transition.md) | 地图切换过场动画 | 🖥 UI | T05 | review |
 | [T08](T08-map-giza.md) | 吉萨地图卡完整版 | 🎨 美术 | T01 | review |
-| [T09](T09-map-paris.md) | 巴黎地图卡（新） | 🎨 美术 | T01 | todo |
+| [T09](T09-map-paris.md) | 巴黎地图卡（新） | 🎨 美术 | T01 | review |
 | [T10](T10-npc-dialogue.md) | NPC 对话框 | 🖥 UI | — | done |
 | [T11](T11-ambient-fx.md) | 环境特效（花瓣/沙尘/云） | ✨ 特效 | — | todo |
 | [T12](T12-ui-key-routing.md) | UI 迁移到按键路由 + 收尾 | 🖥 UI | T05, T06, T10 | done |

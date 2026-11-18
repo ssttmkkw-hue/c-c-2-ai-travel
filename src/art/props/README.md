@@ -19,11 +19,13 @@ export function sakuraTree(p: Palette, variant = 0): THREE.Group
 
 | 函数 | 文件 | 尺寸 | 说明 |
 |---|---|---|---|
+| `planeTree(p, variant?)` | trees.ts | 高 4.6~5.3 | 梧桐，高干扁冠，部件 3 |
 | `roundCrownTree(p, variant?)` | trees.ts | 高 3.2~4.6 | 圆冠，部件 2~3 |
 | `pineTree(p, variant?)` | trees.ts | 高 4.2~5.4 | 三层锥冠，部件 4 |
 | `sakuraTree(p, variant?)` | trees.ts | 高 3.4~4.2 | 花色取 COLORS.sakura，部件 3 |
 | `palmTree(p, variant?)` | trees.ts | 高 4~5.5 | 五片叶，部件 6 |
 | `bush(p, variant?)` | trees.ts | 高 0.7~1.1 | 灌木，部件 2~3 |
+| `vintageLamp(p, variant?)` | street.ts | 高 3.6~4.1 | 复古灯笼路灯，四面发光，部件 6 |
 | `streetLamp(p, variant?)` | street.ts | 高 3.2~4.2 | 路灯，部件 4 |
 | `bench(p, variant?)` | street.ts | 1.6×0.9×0.5 | 长椅，部件 4 |
 | `trashBin(p, variant?)` | street.ts | 高约 1 | 垃圾桶，部件 3 |

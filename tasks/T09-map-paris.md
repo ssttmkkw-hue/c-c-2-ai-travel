@@ -1,6 +1,6 @@
 # T09 · 巴黎地图卡（新）
 
-- **状态**：todo
+- **状态**：review
 - **类型**：🎨 美术
 - **依赖**：T01
 - **预估规模**：L
@@ -34,9 +34,10 @@
 
 ## 完成记录（Cursor 填写）
 
-- 做了什么：
-- 新增/修改文件：
-- 截图或说明：
-- 遗留问题 / 需要 Claude 修改的地方：
+- 做了什么：新建巴黎清晨地图。出生点朝 -Z，石板大道通向横跨塞纳河的石桥，对岸是约 40m 的埃菲尔铁塔（四条斜腿、四面拱、两层平台、交叉斜撑、尖顶金色灯）。大道两侧是奶油墙 + 灰蓝 `prism` 斜顶 + 铁阳台的奥斯曼公寓，东侧咖啡馆有红色遮阳棚、圆桌圆椅。梧桐、复古路灯、南岸绿色书报摊、一艘平底船。鸽子在大道上空盘旋，另有三只在岸边点头；河面有薄雾色波纹。四边用公寓和石墙围住，河面碰撞在桥两侧断开。导游克莱尔穿 `paris-stripe`，服务员吕克穿 `tokyo-student`。网格只计数，超过参考线才在 dev 模式 `console.info`，不丢弃物体。
+- 新增/修改文件：`src/maps/paris/palette.ts`、`landmark.ts`、`street.ts`、`quay.ts`、`index.ts`；`src/art/props/trees.ts`（`planeTree`）、`street.ts`（`vintageLamp`）、`index.ts`、`README.md`；`src/world/registry.ts`（放在 egypt 之后、gallery 之前）；`tasks/T09-map-paris.md`、`tasks/README.md`
+- 截图或说明：Code Bot headless 截图（r3-t09-*.png）：出生点 r3-t09-spawn.png、塞纳河与石桥 r3-t09-river.png、咖啡馆 r3-t09-cafe.png、铁塔 r3-t09-eiffel.png。实测 scene mesh 927、draw calls 743、控制台零报错；从出生点和地图中心向四个方向各跑 6.5 秒，都停在 x∈[-33.4, 13.2]、z∈[-41, 32.2] 的边界内。`npm run build` 通过。脚本统计地图网格 764（含描边；实心 431、描边壳 333），加上玩家 44、导游 66、服务员 53，场景合计约 927，低于 1500。中线 x=0 从 z=20 到铁塔中心 z=-32 无碰撞；河面和桥栏挡住下河；四边在约 ±41.5m 被围墙挡住。铁塔脚有碰撞，拱底可以走。默认第三人称（距离 6、俯角约 -0.25、FOV 55°）里，四条腿和两层平台（约 9.5m / 14.6m）落在画面内，40m 尖顶伸出画面上方，抬头可见。
+- 遗留问题 / 需要 Claude 修改的地方：无必须改的接口。`planeTree`、`vintageLamp` 没有放进 gallery，因为本卡允许修改的文件不含 `src/maps/gallery`。现有服装里没有侍者套，吕克暂用 `tokyo-student`。第三人称贴墙时相机可能转到围墙外侧，靠雾和 200m 地面收住。
+- 请 Claude 看：服务员暂穿 tokyo-student（没有侍者服装，可以之后加一套巴黎服装）；铁塔尖顶在默认俯角下出画，要抬头才看得到；东西两侧可走范围不对称（东侧约 13m 就到墙，西侧可到 -33m）。
 
 ## 审阅意见（Claude 填写）
