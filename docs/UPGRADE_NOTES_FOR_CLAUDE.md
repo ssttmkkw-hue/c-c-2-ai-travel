@@ -273,3 +273,88 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 - 地面色块是离地 6mm 的薄片，极远处（> 80m）理论上可能和地面闪烁，那里已经在雾里。
 - 落叶 / 花瓣是小方块，不是真的叶子形状；没有做云（T11 的 `clouds.ts`）。
 - 巴黎清晨配金色落叶是按任务卡写的，季节感上是否合适请美术判断。
+
+---
+
+## 第三轮：把软件渲染的帧率拉回来（阴影封顶、填充率、自动画质）
+
+提交：`828aa43`（阴影与缓冲）、`99b1ab0`（自动画质与补丁可检查）。本段说明随文档一起提交。
+
+触发：升级前同一台 swiftshader、1280×800 约 50 / 54 / 41 fps，升级后掉到约 12 / 12 / 13.5。内部分辨率从 320×200 提到 640×400 要保留（这是清晰度的来源），所以只动阴影、多余的缓冲和随画质缩放的细节。
+
+### 做了什么
+
+1. **阴影贴图封顶**（`shadowConfig`）：像素风 低 1024 硬采样 / 中 1024 PCF Soft / 高 2048 PCF Soft。高清 低 1024 / 中 2048 / 高 4096。MSAA 只留在高清·高（4x）；像素风本来就是 0。
+2. **阴影相机跟随玩家**（P1-1 简单版）：正交范围从 ±60 米改成 ±45 米，每帧把焦点吸附到阴影贴图像素网格（和 `Camera.lookAt` 的 up=+Y 同一套轴），走路时影子边缘不抖。45 米外的物体不再投下影子。
+3. **像素风离屏缓冲改为 8 位、无 MSAA**。高清仍用半浮点（设备支持时）。调色还是同一次全屏三角形 blit，没有新增 pass。8 位会把亮度 >1 的地方先截断，卡通色阶下和半浮点的差别很小；泛光以后只能接在高清这条路上，除非再把像素风改回半浮点。
+4. **地面细节和粒子**共用 `DETAIL_SCALE`：低 0 / 中 0.5 / 高 1。地面仍按满数量消耗随机数，换档只改 `InstancedMesh.count`，不改 `visible`（否则加载时的动态探测会误报）。
+5. **three 锁死 `0.170.0`**（去掉 `^`）。`shadowPatchApplied` 导出；没套上时始终 `console.warn`。开发模式 `__game.shadowPatchApplied` 和 `__game.qualityReport()`。
+6. **自动画质**（`src/ui/autoQuality.ts`）：第一张图加载后量 2.5 秒，低于 27fps 降一档，中文 toast 只提示一次，写入 `autoQualityDone`。`qualityManual` 在玩家自己改画质时置位。`?autoquality=0` 当次关闭（不写存档）。设置里多一项「帧率过低时自动降低画质」。
+
+### 保留区文件改动明细（第三轮）
+
+#### `src/render/quality.ts`
+
+- **改了什么**：`QUALITY` 不再带阴影尺寸；阴影分像素风 / 高清两张表。新增 `DETAIL_SCALE`。高清中档 `hdSamples` 从 2 改为 0。
+- **为什么**：4096 软阴影和中档 MSAA 在低分辨率像素风上不划算。
+- **影响**：`shadowConfig()` 的返回形状不变（`mapSize` / `filtered` / `hardEdge`）。`QUALITY` 上没有 `shadowMapSize` / `shadowFiltered` 了，仓库内没有别的调用方。
+
+#### `src/world/World.ts`
+
+- **改了什么**：`SHADOW_HALF` 60 → 45。太阳方向存在 `sunOffset`，每帧 `updateShadowFocus()` 把目标和灯光一起挪到吸附后的玩家位置。注册时机用 `queueMicrotask`，排在 `Player` 的 `onUpdate` 之后，用的是本帧位置。
+- **为什么**：同样大小的阴影图，近处更细；贴图从 4096 降到 2048 后精度仍和旧的「2048 盖全图」接近或更好（约 4.4 厘米 / 像素，旧全图 2048 约 5.9 厘米）。
+- **影响**：地图边缘、离玩家超过约 45 米的物体没有影子。契约、碰撞、加载流程没动。坡度偏移仍按「当前半边长 / 贴图尺寸」算。
+
+#### `src/core/Engine.ts`
+
+- **改了什么**：像素风 `UnsignedByteType`，高清才 `HalfFloatType`（不支持浮点时两边都是 8 位）。类型或 MSAA 采样数变了就重建 RenderTarget。`colorBuffer` 只读属性。`frameMs` 是 CPU 提交时间，注释里写明不能当帧时间。
+- **为什么**：半浮点在软件渲染上带宽翻倍，像素风最近邻放大用不上 MSAA 的 resolve。
+- **影响**：像素风不再有 >1 的线性 HDR。`engine.view.samples` 在像素风和高清低/中档是 0，只有高清·高是 4。管线仍是「场景 → 一张 RT → 一次 blit」。
+
+#### `src/core/settings.ts`
+
+- **改了什么**：`autoQuality`（默认 true）、`qualityManual`、`autoQualityDone`。`updateSettings(patch, origin)`，`origin === 'auto'` 时改画质不算玩家手动。
+- **为什么**：自动降档不能和玩家的选择打架，也不能每次进游戏都再降一档。
+- **影响**：存档多三个布尔字段，旧存档缺字段时按默认（允许自动、还没手动、还没降过）。第二个参数不传时行为和以前一样，只是「这次确实改了 quality」会把 `qualityManual` 设为 true。
+
+#### `src/render/toon.ts`
+
+- **改了什么**：导出 `shadowPatchApplied`。补丁对不上时的 `console.warn` 不再包在 `import.meta.env.DEV` 里。
+- **为什么**：生产构建也要能看见静默退化。
+- **影响**：补丁字符串和着色器行为没变。
+
+#### `src/main.ts`
+
+- **改了什么**：`mountAutoQuality(ui)`。开发模式 `__game` 增加 `shadowPatchApplied` 和 `qualityReport`，启动时 `console.info` 打一行。
+- **为什么**：截图脚本和人工检查要能读到阴影尺寸、缓冲类型、补丁是否生效。
+- **影响**：只在 dev 挂 `__game`，和以前一样。
+
+#### `tasks/README.md`
+
+- T11 看板状态 `todo` → `review`，与任务卡一致。云仍然没做。
+
+### 非保留区改动（第三轮）
+
+| 文件 | 改动 |
+|---|---|
+| `src/art/props/ground.ts` | 实例数量乘 `DETAIL_SCALE` |
+| `src/fx/particles.ts` | 粒子比例改用 `DETAIL_SCALE`（数值和原来一样：0 / 0.5 / 1） |
+| `src/ui/autoQuality.ts`、`autoQuality.css`（新） | 自动降档和一次性提示 |
+| `src/ui/settings/index.ts` | 多一个复选框 |
+| `package.json`、`package-lock.json` | `three` 精确 `0.170.0` |
+| `/workspace/pwtool/fableshots.mjs`（不在本仓库） | 打开 `?autoquality=0`，并打印阴影尺寸 / 缓冲 / 补丁 |
+
+### 验证（第三轮）
+
+- `npx tsc --noEmit`、`npm run build` 通过。
+- `node /workspace/pwtool/fableshots.mjs fable-p0` 与 `fable-p0b`：`CONSOLE_ERRORS 0`，三张图都加载，`shadow: 2048`、`buffer: ubyte`、`samples: 0`、`patch: true`。帧率见 `UPGRADE_PLAN.md` 2.9。
+- 不带参数打开：约 7 秒后画质从「高」降到「中」，`qualityManual` 为 false，`autoQualityDone` 为 true，提示文案是「帧率偏低（约 18 帧），已自动把画质从「高」降到「中」。可以在设置里改回来。」
+- `?autoquality=0`：保持「高」。
+- 加载后立刻把画质改成低再改回高：保持「高」，`qualityManual` 为 true，没有提示。
+
+### 留给后续
+
+- 真机帧率仍未测（P0-1）。
+- 软件渲染下离 50fps 的差距主要是 640×400 的填充，不是阴影贴图尺寸。再降内部分辨率会把这次清晰度还回去。
+- 级联阴影没做。离玩家约 45 米以外没有影子。
+- `frameMs` 不能当性能数据。

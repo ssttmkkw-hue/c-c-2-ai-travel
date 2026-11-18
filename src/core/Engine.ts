@@ -38,7 +38,11 @@ export class Engine {
   private target: THREE.WebGLRenderTarget | null = null;
   /** 设备能否写半浮点颜色。像素风不用，高清才用 */
   private readonly floatOk: boolean;
-  /** 上一帧两步各自的耗时（毫秒），给画质报告 / 调试用 */
+  /**
+   * 上一帧两步在 CPU 上交命令的耗时（毫秒）。
+   * 浏览器的 GL 命令缓冲不等待软件光栅化结束，所以这里经常只有 1 毫秒上下，不能当成帧时间。
+   * 帧率用 requestAnimationFrame 量。
+   */
   readonly frameMs = { scene: 0, blit: 0 };
   private readonly blitMaterial: THREE.ShaderMaterial;
   private readonly blitScene = new THREE.Scene();
