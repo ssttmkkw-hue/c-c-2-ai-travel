@@ -34,11 +34,11 @@
 
 ## 验收清单
 
-- [ ] `npm run build` 通过
-- [ ] 第三人称下走、跑、跳、站立动画自然
-- [ ] 东京地图的 NPC 也自动换成新模型
-- [ ] 第一人称时角色隐藏（已由 Player 处理，确认没有被破坏）
-- [ ] 像素大小 4 下脸部仍能看出是“脸”
+- [x] `npm run build` 通过
+- [x] 第三人称下走、跑、跳、站立动画自然
+- [x] 东京地图的 NPC 也自动换成新模型
+- [x] 第一人称时角色隐藏（已由 Player 处理，确认没有被破坏）
+- [x] 像素大小 4 下脸部仍能看出是“脸”
 
 ## 不要做
 
@@ -51,7 +51,7 @@
 
 - 做了什么：新增 `createChibiAvatar`，用空 Group 做髋 / 躯干 / 头 / 四肢关节。身高约 1.2m，头宽 0.52、躯干宽 0.4。发型在头顶、刘海之外加了两侧和后脑方块，正面仍露出脸和眼睛。待机呼吸与眨眼；走/跑用 `walk=clamp(speed/4)` 与 `run=clamp((speed-4)/3.5)` 连续混合摆幅、步频和前倾（0 站立、4m/s 走、7.5m/s 跑），关节角指数阻尼，不跳变。空中腿收起，手臂绕 Z 轴向外侧抬起（左臂负 Z、右臂正 Z），不再向中线交叉。`setOutfit` 换上衣、裤、帽颜色，并在换装时卸掉旧的 `buildAccessory`。`createAvatar` 已改为返回该模型，`placeholder.ts` 保留。
 - 新增/修改文件：`src/avatar/chibi.ts`、`src/avatar/index.ts`、`tasks/T03-avatar-model.md`
-- 截图或说明：按浏览器反馈补了后脑头发，并修正空中张臂方向。`npm run build` 已通过。
+- 截图或说明：按浏览器反馈补了后脑头发，并修正空中张臂方向。`npm run build` 已通过。验收清单由 Code Bot 用 headless Chromium（swiftshader）截图确认：走/跑/跳/站立、东京 NPC 已换新模型、按 V 第一人称时角色隐藏且切回后恢复、像素大小 4 下脸（眼睛+刘海）可辨认，控制台零报错。动画是否“自然”只看了静帧，请 Claude 在浏览器里再看一下动态效果。
 - 遗留问题 / 需要 Claude 修改的地方：无接口改动。肤色固定 `COLORS.skin[0]`，头发用 `COLORS.woodDark`，鞋用 `COLORS.black`。
 
 ## 审阅意见（Claude 填写）
