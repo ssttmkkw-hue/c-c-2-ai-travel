@@ -2,17 +2,24 @@
 import type * as THREE from 'three';
 import type { MapBuildContext } from '@/world/MapCard';
 import { createAvatar } from '@/avatar';
+import { attachNpcBehavior } from './behavior';
 import type { NpcDef } from './types';
 
 export function spawnNpcs(ctx: MapBuildContext, defs: NpcDef[]): { id: string; object: THREE.Object3D }[] {
-  return defs.map((def) => {
-    // 站立版：四肢合进髋部。会走路的 NPC 不要传 idle。头仍是关节，B3 用来转头。
+  return defs.map((def, index) => {
+    // 站立版：四肢合进髋部。会走路的 NPC 不要传 idle。头仍是关节，行为脚本用来转头。
     const rig = createAvatar(def.outfit, { idle: true });
     rig.root.userData.avatar = rig;
     rig.root.position.set(def.x, 0, def.z);
     rig.root.rotation.y = def.yaw ?? 0;
     ctx.add(rig.root, { collide: true });
+    let seeded = false;
     ctx.onUpdate((dt) => {
+      // 呼吸相位按序号错开。冻结帧 dt 一直是 0，不能在生成时改高度，否则基线对不上。
+      if (!seeded && dt > 0) {
+        seeded = true;
+        rig.animate(0.4 + index * 0.83, 0, false);
+      }
       // 雾很远的地方角色看不清，藏起来并停掉眨眼。视锥外的 mesh three 自己会剔，这里省的是雾里还在动的关节。
       const far = liveFogFar(rig.root) ?? ctx.palette.fogFar;
       const limit = far * 0.9;
@@ -26,6 +33,7 @@ export function spawnNpcs(ctx: MapBuildContext, defs: NpcDef[]): { id: string; o
       rig.root.visible = true;
       rig.animate(dt, 0, false);
     });
+    attachNpcBehavior(ctx, rig, def, index);
     return { id: def.id, object: rig.root };
   });
 }
