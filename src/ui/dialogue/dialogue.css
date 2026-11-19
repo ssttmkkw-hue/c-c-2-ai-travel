@@ -42,6 +42,39 @@
   letter-spacing: 1px;
   background: var(--ui-paper);
   border: var(--ui-border);
+  border-bottom-color: var(--dialogue-accent, var(--ui-line));
+}
+
+.dialogue-progress {
+  position: absolute;
+  right: 12px;
+  top: 0;
+  transform: translateY(-58%);
+  margin: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  background: var(--ui-paper);
+  border: var(--ui-border);
+}
+
+.dialogue-progress[hidden] {
+  display: none;
+}
+
+.dialogue-box.is-waiting::after {
+  content: '▼';
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  font-size: 12px;
+  line-height: 12px;
+  animation: dialogue-caret 0.6s steps(2, end) infinite;
+}
+
+@keyframes dialogue-caret {
+  from { transform: translateY(0); }
+  to { transform: translateY(2px); }
 }
 
 .dialogue-text {

@@ -45,6 +45,8 @@ export interface GameEvents {
   'player:jump': Record<string, never>;
   /** 玩家落地。speed = 落地前的下落速度（米/秒） */
   'player:land': { speed: number };
+  /** 对话框每显示两个字发一次（B4），给音效用 */
+  'dialogue:tick': Record<string, never>;
 }
 
 type Handler<T> = (payload: T) => void;

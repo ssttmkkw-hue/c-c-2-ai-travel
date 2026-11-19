@@ -3,6 +3,7 @@
  */
 import { bus } from '@/core/events';
 import { keys, modals } from '@/core/ui';
+import type { MapCardDef } from '@/world/MapCard';
 import './hud.css';
 
 const HINT_MS = 4500;
@@ -30,6 +31,7 @@ export function mountHud(root: HTMLElement): void {
   }
   let hintTimer = 0;
   let nearby: string | null = null;
+  let card: MapCardDef | null = null;
 
   function syncTalk(): void {
     talk.hidden = !nearby || modals.any();
@@ -41,9 +43,10 @@ export function mountHud(root: HTMLElement): void {
     hintTimer = window.setTimeout(() => hints.classList.add('is-dim'), HINT_MS);
   }
 
-  bus.on('map:loaded', ({ card }) => {
+  bus.on('map:loaded', ({ card: next }) => {
+    card = next;
     place.hidden = false;
-    place.textContent = `📍 ${card.name} · ${card.country}`;
+    place.textContent = `📍 ${next.name} · ${next.country}`;
     place.style.animation = 'none';
     void place.offsetWidth;
     place.style.animation = '';
@@ -51,6 +54,10 @@ export function mountHud(root: HTMLElement): void {
 
   bus.on('npc:nearby', ({ npcId }) => {
     nearby = npcId;
+    if (!coarse) {
+      const name = card?.npcs?.find((n) => n.id === npcId)?.name;
+      talk.textContent = name ? `E 和 ${name} 交谈` : '按 E 交谈';
+    }
     syncTalk();
   });
 

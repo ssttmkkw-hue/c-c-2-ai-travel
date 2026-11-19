@@ -19,10 +19,13 @@ interface SayJob {
 
 export class DialogueBox {
   readonly root: HTMLElement;
+  private readonly boxEl: HTMLElement;
   private readonly nameEl: HTMLElement;
+  private readonly progressEl: HTMLElement;
   private readonly textEl: HTMLElement;
   private readonly hintEl: HTMLElement;
   private readonly optionsEl: HTMLElement;
+  private hintUsed = false;
 
   private opened = false;
   private full = '';
@@ -43,13 +46,16 @@ export class DialogueBox {
     this.root.innerHTML = `
       <div class="dialogue-box" role="dialog" aria-modal="true" aria-label="对话">
         <p class="dialogue-name" data-name></p>
+        <p class="dialogue-progress" data-progress hidden></p>
         <p class="dialogue-text" data-text></p>
         <div class="dialogue-options" data-options></div>
         <p class="dialogue-hint" data-hint>E / 空格 / 点击继续 · Esc 结束</p>
       </div>
     `;
     parent.appendChild(this.root);
+    this.boxEl = this.root.querySelector('.dialogue-box') as HTMLElement;
     this.nameEl = this.root.querySelector('[data-name]') as HTMLElement;
+    this.progressEl = this.root.querySelector('[data-progress]') as HTMLElement;
     this.textEl = this.root.querySelector('[data-text]') as HTMLElement;
     this.hintEl = this.root.querySelector('[data-hint]') as HTMLElement;
     this.optionsEl = this.root.querySelector('[data-options]') as HTMLElement;
@@ -81,7 +87,19 @@ export class DialogueBox {
     this.textEl.textContent = '';
     this.nameEl.textContent = speaker;
     this.hintEl.textContent = CONTINUE_HINT;
+    this.hintEl.hidden = this.hintUsed;
+    this.setWaiting(false);
     this.setOpen(true);
+  }
+
+  /** 名字牌右边的「2/4」。不调用就保持隐藏，AI 导游可以不接 */
+  setProgress(current: number, total: number): void {
+    if (total <= 0) {
+      this.progressEl.hidden = true;
+      return;
+    }
+    this.progressEl.hidden = false;
+    this.progressEl.textContent = `${current}/${total}`;
   }
 
   /** 打字机效果；Promise 在整句显示完（含中途按键跳过）时 resolve */
@@ -136,6 +154,9 @@ export class DialogueBox {
   }
 
   close(): void {
+    this.hintUsed = true;
+    this.setWaiting(false);
+    this.progressEl.hidden = true;
     this.session += 1;
     this.sayQueue.splice(0).forEach((job) => job.resolve());
     this.finishTyping();
@@ -200,7 +221,8 @@ export class DialogueBox {
     }
     this.shown += 1;
     this.textEl.textContent = this.full.slice(0, this.shown);
-    this.typeTimer = window.setTimeout(() => this.step(), TYPE_MS);
+    if (this.shown % 2 === 0) bus.emit('dialogue:tick', {});
+    this.typeTimer = window.setTimeout(() => this.step(), delayFor(this.full[this.shown - 1] ?? ''));
   }
 
   /** 打字中：补全当前句。返回是否吃掉了这次输入 */
@@ -249,6 +271,7 @@ export class DialogueBox {
       return;
     }
     if (this.finishTyping()) return;
+    this.setWaiting(false);
     if (this.advanceWait) {
       const wait = this.advanceWait;
       this.advanceWait = null;
@@ -259,9 +282,14 @@ export class DialogueBox {
   /** 台词播完后等下一次推进 */
   waitAdvance(): Promise<void> {
     if (this.advanceWait) this.advanceWait();
+    this.setWaiting(true);
     return new Promise((resolve) => {
       this.advanceWait = resolve;
     });
+  }
+
+  private setWaiting(on: boolean): void {
+    this.boxEl.classList.toggle('is-waiting', on);
   }
 
   private onClick(e: MouseEvent): void {
@@ -285,6 +313,7 @@ export function mountDialogue(root: HTMLElement): DialogueBox {
 
   bus.on('map:loaded', ({ card: next }) => {
     card = next;
+    box.root.style.setProperty('--dialogue-accent', next.palette.accent[0]);
   });
 
   bus.on('ui:modal', ({ id, open }) => {
@@ -311,11 +340,18 @@ async function playLines(box: DialogueBox, npc: NpcDef): Promise<void> {
   box.open(npc.name);
   for (let i = 0; i < npc.lines.length; i += 1) {
     if (!box.isSession(session)) return;
+    box.setProgress(i + 1, npc.lines.length);
     await box.say(npc.lines[i] ?? '');
     if (!box.isSession(session)) return;
     await box.waitAdvance();
   }
   if (box.isSession(session)) box.close();
+}
+
+function delayFor(ch: string): number {
+  if ('，、；：'.includes(ch)) return TYPE_MS * 4;
+  if ('。！？…'.includes(ch)) return TYPE_MS * 8;
+  return TYPE_MS;
 }
 
 function findNpc(card: MapCardDef | null, npcId: string): NpcDef | undefined {

@@ -35,6 +35,8 @@ export class Player {
   private wasAir = false;
   private facing = 0;
   private nearbyNpc: string | null = null;
+  private talkNpc: string | null = null;
+  private faceTarget: number | null = null;
 
   constructor(private engine: Engine, private world: World) {
     this.cam = new CameraRig(engine);
@@ -44,6 +46,24 @@ export class Player {
     bus.on('map:loaded', ({ card }) => this.teleport(card.spawn.x, card.spawn.z, card.spawn.yaw));
     bus.on('camera:mode', ({ mode }) => (this.avatar.root.visible = mode === 'third'));
     bus.on('outfit:equip', ({ outfitId }) => this.avatar.setOutfit(outfitId));
+    bus.on('npc:interact', ({ npcId }) => {
+      this.talkNpc = npcId;
+    });
+    bus.on('ui:modal', ({ id, open }) => {
+      if (id !== 'dialogue') return;
+      if (!open) {
+        this.cam.setFocus(null);
+        this.faceTarget = null;
+        return;
+      }
+      const npc = this.world.npcs.find((n) => n.id === this.talkNpc);
+      if (!npc || this.cam.mode === 'first') return;
+      const to = Math.atan2(-(npc.object.position.x - this.position.x), -(npc.object.position.z - this.position.z));
+      const sideDelta = shortestAngle(this.cam.yaw - to);
+      const side = sideDelta === 0 ? 1 : Math.sign(sideDelta);
+      this.cam.setFocus({ yaw: to + side * 0.6, pitch: -0.1, distance: 4.2 });
+      this.faceTarget = to;
+    });
     engine.onUpdate((dt) => this.update(dt));
   }
 
@@ -107,6 +127,7 @@ export class Player {
 
     // ---- 相机 & 角色 ----
     this.cam.update(dt, this.position, blocked);
+    if (this.faceTarget != null) this.facing = dampAngle(this.facing, this.faceTarget, 10 * dt);
     if (this.cam.mode === 'first') this.facing = this.cam.yaw;
     this.avatar.root.position.copy(this.position);
     this.avatar.root.rotation.y = this.facing;
@@ -158,7 +179,10 @@ export class Player {
       this.nearbyNpc = best;
       bus.emit('npc:nearby', { npcId: best });
     }
-    if (interact && best) bus.emit('npc:interact', { npcId: best });
+    if (interact && best) {
+      this.talkNpc = best;
+      bus.emit('npc:interact', { npcId: best });
+    }
   }
 }
 
@@ -174,6 +198,10 @@ function approach(vel: THREE.Vector3, wish: THREE.Vector3, maxDelta: number): vo
   }
   vel.x += (dx / len) * maxDelta;
   vel.z += (dz / len) * maxDelta;
+}
+
+function shortestAngle(delta: number): number {
+  return Math.atan2(Math.sin(delta), Math.cos(delta));
 }
 
 function dampAngle(from: number, to: number, t: number): number {

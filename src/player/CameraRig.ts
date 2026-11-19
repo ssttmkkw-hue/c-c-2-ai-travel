@@ -30,8 +30,32 @@ export class CameraRig {
   private effDistance = this.distance;
   /** 缓动过的注视点高度，跳跃时不让整幅画面跟着跳 */
   private pivotY = PIVOT_HEIGHT;
+  /** 对话等脚本镜头。null 表示没有 */
+  private focus: { yaw: number; pitch: number; distance: number; shift?: number } | null = null;
+  private focusReturning = false;
+  private saved = { pitch: this.pitch, distance: this.distance };
 
   constructor(private engine: Engine) {}
+
+  /**
+   * 把镜头缓向一个机位。传 null 时俯仰和距离缓回进入前的值，水平角留在原地。
+   * 第一人称下忽略。冻结帧（rawDt === 0）不改这些字段。
+   */
+  setFocus(f: { yaw: number; pitch: number; distance: number; shift?: number } | null): void {
+    if (this.mode === 'first') {
+      this.focus = null;
+      this.focusReturning = false;
+      return;
+    }
+    if (f) {
+      this.saved = { pitch: this.pitch, distance: this.distance };
+      this.focus = f;
+      this.focusReturning = false;
+      return;
+    }
+    this.focus = null;
+    this.focusReturning = true;
+  }
 
   setMode(mode: CameraMode): void {
     this.mode = mode;
@@ -58,6 +82,7 @@ export class CameraRig {
     if (input.isDown('ArrowUp')) this.pitch += keyTurn * 0.6;
     if (input.isDown('ArrowDown')) this.pitch -= keyTurn * 0.6;
     this.distance = THREE.MathUtils.clamp(this.distance + (frozen ? 0 : wheel) * 0.8, 3, 14);
+    this.applyFocus(rawDt, frozen, dx, dy, wheel, input);
 
     if (this.mode === 'first') {
       this.pitch = THREE.MathUtils.clamp(this.pitch, -1.3, 1.3);
@@ -68,6 +93,11 @@ export class CameraRig {
       const targetY = target.y + PIVOT_HEIGHT;
       this.pivotY = rawDt === 0 ? targetY : damp(this.pivotY, targetY, 10, rawDt);
       this.pivot.set(target.x, this.pivotY, target.z);
+      const shift = this.focus?.shift ?? 0;
+      if (shift !== 0) {
+        this.pivot.x += Math.cos(this.yaw) * shift;
+        this.pivot.z -= Math.sin(this.yaw) * shift;
+      }
       const cp = Math.cos(this.pitch);
       this.dir.set(Math.sin(this.yaw) * cp, -Math.sin(this.pitch), Math.cos(this.yaw) * cp);
       // 竖屏拉远乘在想要的距离上，再交给碰撞裁剪。横屏等于 this.distance。
@@ -89,6 +119,42 @@ export class CameraRig {
       camera.lookAt(this.pivot);
     }
   }
+
+  private applyFocus(rawDt: number, frozen: boolean, dx: number, dy: number, wheel: number, input: Engine['input']): void {
+    if (this.focus) {
+      if (rawDt === 0) return;
+      const k = 1 - Math.exp(-6 * rawDt);
+      this.yaw += shortestAngle(this.focus.yaw - this.yaw) * k;
+      this.pitch += (this.focus.pitch - this.pitch) * k;
+      this.distance += (this.focus.distance - this.distance) * k;
+      return;
+    }
+    if (!this.focusReturning) return;
+    const nudged =
+      !frozen &&
+      (dx !== 0 ||
+        dy !== 0 ||
+        wheel !== 0 ||
+        input.isDown('ArrowLeft') ||
+        input.isDown('ArrowRight') ||
+        input.isDown('ArrowUp') ||
+        input.isDown('ArrowDown'));
+    if (nudged) {
+      this.focusReturning = false;
+      return;
+    }
+    if (rawDt === 0) return;
+    const k = 1 - Math.exp(-6 * rawDt);
+    this.pitch += (this.saved.pitch - this.pitch) * k;
+    this.distance += (this.saved.distance - this.distance) * k;
+    if (Math.abs(this.pitch - this.saved.pitch) < 0.001 && Math.abs(this.distance - this.saved.distance) < 0.02) {
+      this.focusReturning = false;
+    }
+  }
+}
+
+function shortestAngle(delta: number): number {
+  return Math.atan2(Math.sin(delta), Math.cos(delta));
 }
 
 function damp(current: number, target: number, lambda: number, dt: number): number {
