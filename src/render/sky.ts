@@ -58,9 +58,8 @@ export class Sky {
         float noise( vec2 p ) {
           vec2 i = floor( p );
           vec2 f = fract( p );
-          // 像素风：格子之间不插值，云是一块一块的
-          float u = bands > 0.0 ? step( 0.5, f.x ) : f.x * f.x * ( 3.0 - 2.0 * f.x );
-          float v = bands > 0.0 ? step( 0.5, f.y ) : f.y * f.y * ( 3.0 - 2.0 * f.y );
+          float u = f.x * f.x * ( 3.0 - 2.0 * f.x );
+          float v = f.y * f.y * ( 3.0 - 2.0 * f.y );
           return mix( mix( hash( i ), hash( i + vec2( 1.0, 0.0 ) ), u ),
                       mix( hash( i + vec2( 0.0, 1.0 ) ), hash( i + vec2( 1.0, 1.0 ) ), u ), v );
         }
@@ -86,13 +85,19 @@ export class Sky {
             float band = smoothstep( 0.03, 0.1, dir.y ) * ( 1.0 - smoothstep( 0.55, 0.92, dir.y ) );
             vec2 p = dir.xz / ( dir.y * 0.7 + 0.28 );
             p.x += time * 0.03;
-            if ( bands > 0.0 ) p = floor( p * 18.0 ) / 18.0;
-            float n = noise( p * 2.6 );
-            if ( bands <= 0.0 ) n = n * 0.65 + noise( p * 2.2 + 3.7 ) * 0.35;
+            float n = noise( p * 1.3 ) * 0.65 + noise( p * 3.1 + 3.7 ) * 0.35;
             float thresh = mix( 0.8, 0.46, cloudDensity );
-            float m = smoothstep( thresh, thresh + ( bands > 0.0 ? 0.02 : 0.16 ), n ) * band;
-            if ( bands > 0.0 ) m = step( 0.5, m );
-            col = mix( col, cloudColor, m * 0.92 );
+            if ( bands > 0.0 ) {
+              // 内部分辨率已经是像素，形状用硬阈值，边缘自然成台阶
+              float m = step( thresh, n ) * step( 0.5, band );
+              float core = step( thresh + 0.07, n );
+              vec3 shade = mix( cloudColor, midColor, 0.35 );
+              col = mix( col, shade, m * 0.92 );
+              col = mix( col, cloudColor, m * core * 0.92 );
+            } else {
+              float m = smoothstep( thresh, thresh + 0.16, n ) * band;
+              col = mix( col, cloudColor, m * 0.92 );
+            }
           }
 
           col = mix( col, sunColor, glow );

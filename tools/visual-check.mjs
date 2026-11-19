@@ -38,6 +38,8 @@ const VIEWS = [
   { id: 'paris-noon', map: 'paris', time: 'noon', x: 0, z: 8, yaw: 0, distance: 9, pitch: -0.18 },
   { id: 'egypt-dusk', map: 'egypt', time: 'dusk', x: 0, z: 16, yaw: 0, distance: 9, pitch: -0.22 },
   { id: 'egypt-dawn', map: 'egypt', time: 'dawn', x: 0, z: 16, yaw: 0, distance: 9, pitch: -0.22 },
+  // 抬头看云。name 是基线文件名，id 仍是地图。
+  { id: 'tokyo', name: 'tokyo-sky', x: 0, z: 22, yaw: 0, distance: 6, pitch: 0.3 },
 ];
 
 async function exists(file) {
@@ -160,7 +162,8 @@ await mkdir(diffDir, { recursive: true });
 let failed = 0;
 for (const view of VIEWS) {
   const actual = await shoot(page, view);
-  const file = path.join(baselineDir, `${view.id}.png`);
+  const fileName = view.name ?? view.id;
+  const file = path.join(baselineDir, `${fileName}.png`);
   if (update || !(await exists(file))) {
     await writeFile(file, actual);
     console.log(update ? '更新' : '新建', path.relative(root, file), `${(actual.length / 1024).toFixed(0)} KB`);
@@ -176,9 +179,9 @@ for (const view of VIEWS) {
   const ratio = result.diff / result.total;
   const ok = ratio <= MAX_RATIO;
   if (!ok) failed++;
-  console.log(`${view.id} 不同像素 ${(ratio * 100).toFixed(2)}%（${result.diff}/${result.total}）${ok ? ' 通过' : ' 失败'}`);
+  console.log(`${fileName} 不同像素 ${(ratio * 100).toFixed(2)}%（${result.diff}/${result.total}）${ok ? ' 通过' : ' 失败'}`);
   if (!ok) {
-    const diffPath = path.join(diffDir, `${view.id}.png`);
+    const diffPath = path.join(diffDir, `${fileName}.png`);
     await writeFile(diffPath, Buffer.from(result.png, 'base64'));
     console.log('  差异图', path.relative(root, diffPath));
   }

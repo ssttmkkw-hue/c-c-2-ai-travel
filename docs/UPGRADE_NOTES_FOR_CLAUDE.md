@@ -683,3 +683,22 @@ draw call 降 6 倍的收益要在真实 GPU（尤其手机）上才看得到，
 - 「你好，东京。」打完用了 842ms，字数 × 42ms 是 252ms。
 - 截图 `/workspace/c-c-2-shots/r2-B4-dialogue-800.png`、`r2-B4-dialogue-1080.png`：双人镜头、继续箭头、`2/4`。
 - 1280×800 出生点绘制次数和 B3 之后相同：东京 70 / 21441，吉萨 45 / 17529，巴黎 83 / 18869。
+
+---
+
+## R2-B5 · 像素云
+
+### 保留区改动
+
+- `src/render/sky.ts`：只改片元着色器正文。`noise()` 两种风格都用平滑插值。去掉投影后的 `floor(p * 18)`。云用两个八度；像素风两层硬阈值，高清仍是 `smoothstep`。`thresh = mix(0.8, 0.46, cloudDensity)` 没动，各图 `cloudDensity` 没动。
+- `tools/visual-check.mjs`：视角可带 `name`（缺省等于 `id`），基线文件名用 `name`，切地图仍用 `id`。追加 `tokyo-sky`（抬头 `pitch 0.3`）。
+
+### 做了什么
+
+- 像素云不再在云平面坐标上取整，硬边只来自低分辨率上的阈值。云心用更亮的 `cloudColor`，外圈掺一点天空色。
+
+### 验证
+
+- `npm run typecheck` 通过。本提交 `node tools/visual-check.mjs --update` 重截了原有九张加上 `tokyo-sky`。随后 `npm run shots` 十张都是 0 个不同像素，控制台 0 错误。
+- 改前 `/workspace/c-c-2-shots/r2-B5-before-{tokyo-sky,egypt,paris}.png`，改后 `r2-B5-after-{tokyo-sky,egypt,paris}.png`。东京、巴黎是大块圆团、半天云，云心更亮；吉萨仍是零星几朵。直边不再横跨半个天空。高清（`\`）云是软边。
+- 1280×800 出生点、`?autoquality=0`：东京 70 / 21441，吉萨 45 / 17529，巴黎 83 / 18869。和 B4 之后一样。
